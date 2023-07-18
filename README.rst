@@ -24,7 +24,9 @@ This package also includes tools to load in standard short Fourier transforms (S
 
 
 * Free software: MIT license
-* Documentation: https://joseph.bayley.docs.ligo.org/soapcw
+* Documentation: https://soapcw.readthedocs.io/en/latest/
+
+* old LIGO hosted package(no longer maintained): https://git.ligo.org/joseph.bayley/soapcw/ 
 
 Publications
 ----------------
