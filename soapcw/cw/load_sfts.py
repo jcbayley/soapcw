@@ -60,7 +60,6 @@ class LoadSFT:
                 # set the number of bins for running median
                 self.norm_rngmed(med_width=norm, remove_sft = remove_sft,save_rngmed=save_rngmed) 
 
-        print("rngmedshape",np.shape(self.H1.rng_med))
         # set the frequency bins to veto, i.e. set to mean of spectrogram
         if vetolist is not None:
             self.veto_freq_bins(vetolist)
