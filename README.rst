@@ -6,6 +6,11 @@ soap
 .. image:: https://img.shields.io/pypi/v/soap.svg
         :target: https://pypi.python.org/pypi/soap
 
+.. image:: https://readthedocs.org/projects/soapcw/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: https://soapcw.readthedocs.io/en/latest/?badge=latest
+		 
 SOAP: Applying the Viterbi algorithm to search for sources
 of continuous gravitational waves.
 
