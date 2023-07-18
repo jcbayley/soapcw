@@ -8,3 +8,4 @@ appdirs
 h5py
 torch-summary
 regex
+importlib_resources
