@@ -1,0 +1,10 @@
+matplotlib
+cython
+scipy
+lalsuite
+numpy
+torch
+appdirs
+h5py
+torch-summary
+regex

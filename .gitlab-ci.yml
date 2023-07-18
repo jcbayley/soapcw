@@ -1,0 +1,82 @@
+stages:
+  - test
+  - build
+  - deploy
+
+.test-python: &test-python
+  stage: test
+  image: python
+  script:
+    - python setup.py install
+    - ls
+    - cd
+    - python -c "import soapcw"
+
+# test basic install on python3
+basic-3.7:
+#  <<: *test-python
+  image: python:3.7
+  script:
+    - pip install -r requirements.txt
+    - python setup.py install
+
+# test basic install on python3
+basic-3.9:
+#  <<: *test-python
+  image: python:3.9
+  script:
+    - pip install -r requirements.txt
+    - python setup.py install
+
+test: 
+  stage: test
+  image: python:3.9
+  script:
+    - pip install -r requirements_dev.txt
+    - python setup.py install
+    - make test
+
+
+build_docs:
+  stage: build
+  image: python:3.9
+  script:
+   - apt-get update -y
+   - apt-get install -y --no-install-recommends pandoc
+   - pip install sphinx sphinx-bootstrap-theme sphinx_rtd_theme nbsphinx
+   - pip install -r requirements_dev.txt
+   - python setup.py install
+   - make docs
+  after_script:
+   - mv docs/_build/html html
+  artifacts:
+    when: always
+    paths:
+     - html
+    expire_in: 1 days
+
+pages:
+  stage: deploy
+  #image: jcbayley/soap-test-python27:latest
+  image: python:3.9
+  script:
+   - mv html/ public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 days
+  only:
+  - master
+
+pypi:
+    image: python:3.9
+    stage: deploy
+    cache: {}
+    script:
+        - pip install -U twine
+        - pip install -r requirements.txt
+        - python setup.py sdist 
+        - twine upload dist/*
+    only:
+        - tags
+        - master
