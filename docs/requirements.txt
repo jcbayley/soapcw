@@ -1,7 +1,13 @@
 matplotlib
-numpy
 cython
 scipy
-PyCBC
 lalsuite
+numpy
+torch
+appdirs
+h5py
+torch-summary
+regex
+importlib_resources
+ipykernel
 nbsphinx
