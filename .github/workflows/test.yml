@@ -1,7 +1,5 @@
 name: SOAP test
 
-name: Unit tests
-
 on:
   push:
     branches: [ main, test, release* ]
@@ -30,8 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-	pip install .
+        pip install .[test]
     - name: Check dependencies
       if: success() || failure()
       run: |
