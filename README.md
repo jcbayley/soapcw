@@ -1,12 +1,13 @@
-====
-soap
-====
+
 
 [![PyPI](https://img.shields.io/pypi/v/soapcw)](https://pypi.org/project/soapcw/)
 [![Documentation Status](https://readthedocs.org/projects/soapcw/badge/?version=latest)](https://soapcw.readthedocs.io/en/latest/?badge=latest)
 ![tests](https://github.com/jcbayley/soapcw/actions/workflows/tests.yml/badge.svg)
 
 .. image:: https://raw.githubusercontent.com/jcbayley/soapcw/main/logo/drawing.png	
+    :scale: 30%
+
+# SOAP
 
 SOAP: Applying the Viterbi algorithm to search for sources
 of continuous gravitational waves.
@@ -25,23 +26,22 @@ This package also includes tools to load in standard short Fourier transforms (S
 
 * old LIGO hosted package (!!!!!no longer maintained!!!!): https://git.ligo.org/joseph.bayley/soapcw/ 
 
-Publications
-----------------
+# Publications
+
 * Methods paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006
 * CNN followup paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024
 * Parameter estimation paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022 
 
 
-Features
-----------------
+# Features
+#
 
 
-TODO
-----------------
+# TODO
+
 * robustly include three detectors 
 
-Credits
-----------------
+# Credits
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
