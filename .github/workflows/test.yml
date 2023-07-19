@@ -2,9 +2,9 @@ name: SOAP test
 
 on:
   push:
-    branches: [ main, test, release* ]
+    branches: [ test, release* ]
   pull_request:
-    branches: [ main, test, release* ]
+    branches: [ main, release* ]
 
 
 jobs:
