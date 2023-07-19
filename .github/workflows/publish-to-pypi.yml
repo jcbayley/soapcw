@@ -20,6 +20,9 @@ jobs:
         pip install
         build
         --user
+    - name: install requirements
+      run: >-
+        pip install -r requirements.txt
     - name: Build binaries
       run: >-
         python -m
