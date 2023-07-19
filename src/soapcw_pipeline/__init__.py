@@ -9,12 +9,5 @@ try:
 except PackageNotFoundError:
     # package is not installed
     __version__ = "unknown"
-from .soap import single_detector, two_detector, three_detector, single_detector_gaps
-from .tools import tools, plots
-from .cnn import __init__
-from .neville import __init__
-from .line_aware_stat import __init__
-from .cw import __init__
-from . import soap_config_parser
-
+from . import make_dag_files_astro, make_dag_files_lines, make_html_page, run_full_soap_astro, run_full_soap_lines, soap_config_parser
 
