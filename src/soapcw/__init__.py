@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from importlib.metadata import PackageNotFoundError, version
 """Top-level package for soapcw."""
 
 __author__ = """Joe Bayley"""
 __email__ = 'joseph.bayley@glasgow.ac.uk'
-__version__ = '0.2.3'
-from .soapcw import single_detector, two_detector, three_detector, single_detector_gaps
+try:
+    __version__ = version(__name__)
+except PackageNotFoundError:
+    # package is not installed
+    __version__ = "unknown"
+from .soap import single_detector, two_detector, three_detector, single_detector_gaps
 from .tools import tools, plots
 from .cnn import __init__
 from .neville import __init__

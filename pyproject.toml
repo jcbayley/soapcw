@@ -1,3 +1,11 @@
+[build-system]
+requires = [
+    "setuptools", 
+    "wheel", 
+    "Cython>=3.0.0"
+    ]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "soapcw"
 version = "0.2.3"
@@ -49,14 +57,5 @@ soapcw-cnn-make-data-dag = "soapcw.cnn.cnn_data_dag_gen:main"
 soapcw-cnn-make-data = "soapcw.cnn.cnn_data_gen:main"
 soapcw-cnn-train-model = "soapcw.cnn.train_model:main"
 
-[build-system]
-requires = [
-    "setuptools", 
-    "wheel", 
-    "Cython>=3.0.0"
-    ]
-build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = ["src"]
 
