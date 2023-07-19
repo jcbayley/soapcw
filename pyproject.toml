@@ -1,0 +1,62 @@
+[build-system]
+requires = [
+    "setuptools", 
+    "wheel", 
+    "Cython>=3.0.0"
+    ]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soapcw"
+version = "0.2.4"
+description = "SOAP is a rapid algorithm to search for continuous sources of gravitational waves, with a wider application to long duration narrowband signals."
+authors=[
+    {name="Joe Bayley", email = "joseph.bayley@glasgow.ac.uk"}
+    ]
+maintainers=[
+    {name="Joe Bayley", email = "joseph.bayley@glasgow.ac.uk"}
+    ]
+readme = "README.md"
+license = {text = "MIT License"}
+keywords = ["gravitational", "cw", "soap", "ligo",'gravitational waves','pulsars','neutron stars','continuous waves']
+classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Natural Language :: English',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+    ]
+dependencies = [
+    "matplotlib",
+    "Cython",
+    "scipy",
+    "lalsuite",
+    "numpy",
+    "torch",
+    "appdirs",
+    "h5py",
+    "torch-summary",
+    "regex",
+    "importlib_resources",
+    "requests",
+    "pandas"
+    ]
+
+[project.urls]
+Documentation = "https://soapcw.readthedocs.io/"
+Repository = "https://github.com/jcbayley/soapcw"
+
+[project.scripts]
+soapcw-make-dag-files-lines = "pipeline.make_dag_files_lines:main"
+soapcw-make-dag-files-astro = "pipeline.make_dag_files_astro:main"
+soapcw-run-soap-lines = "pipeline.run_full_soap_lines:main"
+soapcw-run-soap-astro = "pipeline.run_full_soap_astro:main"
+soapcw-make-html-pages = "pipeline.make_html_page:main"
+soapcw-cnn-make-data-dag = "soapcw.cnn.cnn_data_dag_gen:main"
+soapcw-cnn-make-data = "soapcw.cnn.cnn_data_gen:main"
+soapcw-cnn-train-model = "soapcw.cnn.train_model:main"
+
+
+
