@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 __author__ = """Joe Bayley"""
 __email__ = 'joseph.bayley@glasgow.ac.uk'
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 from .soapcw import single_detector, two_detector, three_detector, single_detector_gaps
 from .tools import tools, plots
 from .cnn import __init__
