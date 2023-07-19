@@ -22,7 +22,7 @@ jobs:
         --user
     - name: install requirements
       run: >-
-        pip install -r requirements.txt
+        pip install Cython
     - name: Build binaries
       run: >-
         python -m
