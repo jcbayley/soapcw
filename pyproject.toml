@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "soapcw"
-version = "0.2.3"
+version = "0.2.4"
 description = "SOAP is a rapid algorithm to search for continuous sources of gravitational waves, with a wider application to long duration narrowband signals."
 authors=[
     {name="Joe Bayley", email = "joseph.bayley@glasgow.ac.uk"}
