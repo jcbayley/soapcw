@@ -2,17 +2,17 @@
 
 [![PyPI](https://img.shields.io/pypi/v/soapcw)](https://pypi.org/project/soapcw/)
 [![Documentation Status](https://readthedocs.org/projects/soapcw/badge/?version=latest)](https://soapcw.readthedocs.io/en/latest/?badge=latest)
-![tests](https://github.com/jcbayley/soapcw/actions/workflows/tests.yml/badge.svg)
+[![tests](https://github.com/jcbayley/soapcw/actions/workflows/tests.yml/badge.svg)]()
 
-.. image:: https://raw.githubusercontent.com/jcbayley/soapcw/main/logo/drawing.png	
-    :scale: 30%
+
+<img src="https://raw.githubusercontent.com/jcbayley/soapcw/main/logo/drawing.png" alt="Logo" width="30%"/>
 
 # SOAP
 
 SOAP: Applying the Viterbi algorithm to search for sources
 of continuous gravitational waves.
 
-.. image:: https://raw.githubusercontent.com/jcbayley/soapcw/main/src/pipeline/images/vitmap_ex.png
+<img src="https://raw.githubusercontent.com/jcbayley/soapcw/main/src/pipeline/images/vitmap_ex.png" alt="Vitmap"/>
 
 SOAP is primarily developed to search for continuous sources of
 gravitational waves, however, has a more general application to search
