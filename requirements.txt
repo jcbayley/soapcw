@@ -1,5 +1,5 @@
 matplotlib
-cython
+Cython
 scipy
 lalsuite
 numpy
