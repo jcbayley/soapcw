@@ -1,10 +1,7 @@
 from __future__ import print_function
 import numpy as np
 import matplotlib
-try:
-    import matplotlib.pyplot as plt
-except:
-    print("cannot import matplotlib")
+import matplotlib.pyplot as plt
 import timeit
 import scipy.stats as st
 import os
