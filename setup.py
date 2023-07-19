@@ -73,7 +73,6 @@ else:
 cmdclass = { 'build_ext': build_ext , }
 
 setup(
-    zip_safe=False,
     ext_modules = cythonize(ext_modules),
     cmdclass=cmdclass,
 )
