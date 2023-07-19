@@ -10,3 +10,4 @@ torch-summary
 regex
 importlib_resources
 requests
+pandas

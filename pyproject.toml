@@ -40,7 +40,8 @@ dependencies = [
     "torch-summary",
     "regex",
     "importlib_resources",
-    "requests"
+    "requests",
+    "pandas"
     ]
 
 [project.urls]
