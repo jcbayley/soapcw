@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/soapcw)](https://pypi.org/project/soapcw/)
 [![Documentation Status](https://readthedocs.org/projects/soapcw/badge/?version=latest)](https://soapcw.readthedocs.io/en/latest/?badge=latest)
-[![tests](https://github.com/jcbayley/soapcw/actions/workflows/tests.yml/badge.svg)]()
+![tests](https://github.com/jcbayley/soapcw/actions/workflows/test.yml/badge.svg)
 
 
 <img src="https://raw.githubusercontent.com/jcbayley/soapcw/main/logo/drawing.png" alt="Logo" width="30%"/>
