@@ -16,13 +16,6 @@ def build_ext(*args,**kwargs):
 def cythonize(*args,**kwargs):
     from Cython.Build import cythonize as _cythonize
     return _cythonize(*args,**kwargs)
-
-
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
-
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
     
 class CustomInstall(install):
     def run(self):

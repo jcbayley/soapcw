@@ -16,7 +16,7 @@ authors=[
 maintainers=[
     {name="Joe Bayley", email = "joseph.bayley@glasgow.ac.uk"}
     ]
-readme = "README.rst"
+readme = "README.md"
 license = {text = "MIT License"}
 keywords = ["gravitational", "cw", "soap", "ligo",'gravitational waves','pulsars','neutron stars','continuous waves']
 classifiers=[
