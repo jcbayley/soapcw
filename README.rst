@@ -2,19 +2,16 @@
 soap
 ====
 
+[![PyPI](https://img.shields.io/pypi/v/soapcw)](https://pypi.org/project/soapcw/)
+[![Documentation Status](https://readthedocs.org/projects/soapcw/badge/?version=latest)](https://soapcw.readthedocs.io/en/latest/?badge=latest)
+![tests](https://github.com/jcbayley/soapcw/actions/workflows/tests.yml/badge.svg)
 
-.. image:: https://img.shields.io/pypi/v/soap.svg
-        :target: https://pypi.python.org/pypi/soap
+.. image:: https://raw.githubusercontent.com/jcbayley/soapcw/main/logo/drawing.png	
 
-.. image:: https://readthedocs.org/projects/soapcw/badge/?version=latest
-    :alt: Documentation Status
-    :scale: 100%
-    :target: https://soapcw.readthedocs.io/en/latest/?badge=latest
-		 
 SOAP: Applying the Viterbi algorithm to search for sources
 of continuous gravitational waves.
 
-.. image:: https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/vitmap_ex.png
+.. image:: https://raw.githubusercontent.com/jcbayley/soapcw/main/src/pipeline/images/vitmap_ex.png
 
 SOAP is primarily developed to search for continuous sources of
 gravitational waves, however, has a more general application to search
@@ -26,7 +23,7 @@ This package also includes tools to load in standard short Fourier transforms (S
 * Free software: MIT license
 * Documentation: https://soapcw.readthedocs.io/en/latest/
 
-* old LIGO hosted package(no longer maintained): https://git.ligo.org/joseph.bayley/soapcw/ 
+* old LIGO hosted package (!!!!!no longer maintained!!!!): https://git.ligo.org/joseph.bayley/soapcw/ 
 
 Publications
 ----------------
