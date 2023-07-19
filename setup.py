@@ -16,13 +16,6 @@ def build_ext(*args,**kwargs):
 def cythonize(*args,**kwargs):
     from Cython.Build import cythonize as _cythonize
     return _cythonize(*args,**kwargs)
-
-
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
-
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
     
 class CustomInstall(install):
     def run(self):
@@ -40,7 +33,6 @@ class CustomInstall(install):
 cwd = os.getcwd()
 homedir = os.path.expanduser("~")
 
-
 soapcw_include_dirs = ["{}/soapcw/glibc_fix.h".format(cwd),
                      "{}/repositories/gsl/include/".format(homedir),
                      "{}/repositories/boost_1_71_0/boost/math/distributions/".format(homedir)]
@@ -56,14 +48,9 @@ int_libraries = ["gsl","gslcblas"]
 
 int_library_dirs = ["/{}/repositories/gsl/lib/".format(homedir)]
 
-
-
-
-dep_links = []
-
 # will include this later
-lookup_module =     Extension("soapcw.line_aware_stat.gen_lookup",
-                              ["src/line_aware_stat/gen_lookup.pyx", "src/line_aware_stat/integrals.cpp"],
+lookup_module = Extension("line_aware_stat.gen_lookup",
+                              ["src/soapcw/line_aware_stat/gen_lookup.pyx", "src/soapcw/line_aware_stat/integrals.cpp"],
                               language='c++',
                               include_dirs=int_include_dirs,
                               library_dirs=int_library_dirs,
@@ -74,20 +61,18 @@ cpp=False
 
 if cpp:
     ext_modules = [
-        Extension("soapcw.soapcw",
-                  [ "src/soapcw.pyx" ]),
+        Extension("soapcw.soap",
+                  [ "src/soapcw/soap.pyx" ]),
         lookup_module,]
 else:
     ext_modules = [
-    Extension("soapcw.soapcw",
-              [ "src/soapcw.pyx" ]),]
+    Extension("soapcw.soap",
+              [ "src/soapcw/soap.pyx" ]),]
 
 
 cmdclass = { 'build_ext': build_ext , }
 
 setup(
-    packages=find_packages(),
-    test_suite='tests',
     zip_safe=False,
     ext_modules = cythonize(ext_modules),
     cmdclass=cmdclass,

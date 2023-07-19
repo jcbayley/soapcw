@@ -825,7 +825,7 @@ def main():
     from .soap_config_parser import SOAPConfig
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-c', '--config-file', help='config file', type=str, required=False, default=None)
+    parser.add_argument('-c', '--config-file', help='config file', type=str, required=True, default=None)
     parser.add_argument('-o', '--out-path', help='top level of output directories', type=str)
     parser.add_argument('--force-overwrite', help='force overwrite tables', action=argparse.BooleanOptionalAction)
                                                    

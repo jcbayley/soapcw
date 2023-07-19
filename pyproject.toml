@@ -1,6 +1,14 @@
+[build-system]
+requires = [
+    "setuptools", 
+    "wheel", 
+    "Cython>=3.0.0"
+    ]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "soapcw"
-version = "0.2.3"
+version = "0.2.4"
 description = "SOAP is a rapid algorithm to search for continuous sources of gravitational waves, with a wider application to long duration narrowband signals."
 authors=[
     {name="Joe Bayley", email = "joseph.bayley@glasgow.ac.uk"}
@@ -8,7 +16,7 @@ authors=[
 maintainers=[
     {name="Joe Bayley", email = "joseph.bayley@glasgow.ac.uk"}
     ]
-readme = "README.rst"
+readme = "README.md"
 license = {text = "MIT License"}
 keywords = ["gravitational", "cw", "soap", "ligo",'gravitational waves','pulsars','neutron stars','continuous waves']
 classifiers=[
@@ -32,7 +40,8 @@ dependencies = [
     "torch-summary",
     "regex",
     "importlib_resources",
-    "requests"
+    "requests",
+    "pandas"
     ]
 
 [project.urls]
@@ -49,14 +58,5 @@ soapcw-cnn-make-data-dag = "soapcw.cnn.cnn_data_dag_gen:main"
 soapcw-cnn-make-data = "soapcw.cnn.cnn_data_gen:main"
 soapcw-cnn-train-model = "soapcw.cnn.train_model:main"
 
-[build-system]
-requires = [
-    "setuptools", 
-    "wheel", 
-    "Cython>=3.0.0"
-    ]
-build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = ["src"]
 
