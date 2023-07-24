@@ -18,7 +18,7 @@ namespaces = false
 
 [project]
 name = "soapcw"
-version = "0.2.4"
+version = "0.2.5"
 description = "SOAP is a rapid algorithm to search for continuous sources of gravitational waves, with a wider application to long duration narrowband signals."
 authors=[
     {name="Joe Bayley", email = "joseph.bayley@glasgow.ac.uk"}
