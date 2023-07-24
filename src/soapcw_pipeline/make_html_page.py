@@ -8,12 +8,12 @@ import importlib.resources as pkg_resources
 import importlib_resources
 import pandas as pd
 
-def make_directory_structure(root_dir):
 
+def make_directory_structure(root_dir):
     my_resources = importlib_resources.files("soapcw_pipeline")
-    cssfile = (my_resources / "css"/ "general.css")
-    javascriptfile = (my_resources / "scripts"/ "table_scripts.js")
-    
+    cssfile = my_resources / "css" / "general.css"
+    javascriptfile = my_resources / "scripts" / "table_scripts.js"
+
     if not os.path.isdir(os.path.join(root_dir, "css")):
         os.makedirs(os.path.join(root_dir, "css"))
 
@@ -27,8 +27,9 @@ def make_directory_structure(root_dir):
     shutil.copy("../scripts/table_scripts.js", os.path.join(root_dir, "scripts/"))
     """
 
+
 def create_page_usage_page():
-    html = ''' <!DOCTYPE html>
+    html = """ <!DOCTYPE html>
     <html lang="en">
     <head>
     <title>Usage</title>
@@ -106,14 +107,12 @@ def create_page_usage_page():
     </div>
 
     </body>
-    </html>'''
+    </html>"""
     return html
 
 
 def create_home_page():
-
-
-    html = ''' <!DOCTYPE html>
+    html = """ <!DOCTYPE html>
     <html lang="en">
     <head>
     <title>SOAP</title>
@@ -163,12 +162,12 @@ def create_home_page():
     </div>
 
     </body>
-    </html>'''
+    </html>"""
     return html
 
-def create_astro_page(run_headings, sub_headings):
 
-    html = f'''<!DOCTYPE html>
+def create_astro_page(run_headings, sub_headings):
+    html = f"""<!DOCTYPE html>
             <html lang="en">
             <head>
             <title>Astro Page</title>
@@ -219,13 +218,13 @@ def create_astro_page(run_headings, sub_headings):
 
             </body>
 
-            </html>'''
+            </html>"""
 
     return html
 
-def create_line_page(run_headings, sub_headings):
 
-    html = f'''<!DOCTYPE html>
+def create_line_page(run_headings, sub_headings):
+    html = f"""<!DOCTYPE html>
             <html lang="en">
             <head>
             <title>Line Page</title>
@@ -276,16 +275,13 @@ def create_line_page(run_headings, sub_headings):
 
             </body>
 
-            </html>'''
+            </html>"""
 
     return html
 
 
-
 def create_run_page(run_headings, obs_run="run"):
-
-
-    html = f'''
+    html = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -389,7 +385,7 @@ def create_run_page(run_headings, obs_run="run"):
 
 
     </html>
-    '''
+    """
 
     # button to be added to show all of the frequency bands
     """ <div class="box" id="showalldiv">
@@ -398,10 +394,9 @@ def create_run_page(run_headings, obs_run="run"):
 
     return html
 
+
 def create_line_run_page(run_headings, obs_run="run"):
-
-
-    html = f'''
+    html = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -496,7 +491,7 @@ def create_line_run_page(run_headings, obs_run="run"):
 
 
     </html>
-    '''
+    """
 
     # button to be added to show all of the frequency bands
     """ <div class="box" id="showalldiv">
@@ -506,7 +501,7 @@ def create_line_run_page(run_headings, obs_run="run"):
     return html
 
 
-def read_line_files_old(linefile,det=None):
+def read_line_files_old(linefile, det=None):
     """
     open line list file and save information on line
     returns
@@ -515,24 +510,25 @@ def read_line_files_old(linefile,det=None):
         list of lines []
     """
     data = []
-    with open(linefile,"r") as f: 
+    with open(linefile, "r") as f:
         i = 0
-        for line in f.readlines(): 
+        for line in f.readlines():
             if i == 0:
-                i +=1
+                i += 1
                 continue
-            if not line.startswith("%"): 
+            if not line.startswith("%"):
                 lnsplit = line.split("\t")
                 lnsave = []
                 for ln in lnsplit:
                     try:
                         lnsave.append(float(ln))
                     except:
-                        lnsave.append("{} {} {} \n".format(det,lnsplit[0],ln))
+                        lnsave.append("{} {} {} \n".format(det, lnsplit[0], ln))
                 data.append(lnsave)
-                del lnsplit,lnsave
+                del lnsplit, lnsave
 
     return data
+
 
 def get_line_info_old(linedata, flow, fhigh):
     info = ""
@@ -544,7 +540,11 @@ def get_line_info_old(linedata, flow, fhigh):
                 lowfreq = line[0] - line[5]
                 highfreq = line[0] + line[6]
 
-                if flow < lowfreq < fhigh or flow < highfreq < fhigh or flow < line[0] < fhigh:
+                if (
+                    flow < lowfreq < fhigh
+                    or flow < highfreq < fhigh
+                    or flow < line[0] < fhigh
+                ):
                     info += line[7]
             # if type of line is a comb include the initial frequency, and first harmonic
             elif line[1] == 1:
@@ -553,7 +553,7 @@ def get_line_info_old(linedata, flow, fhigh):
                 lharm = line[4]
                 offset = line[2]
 
-                ranges = np.arange(fharm,lharm)*spacing + offset
+                ranges = np.arange(fharm, lharm) * spacing + offset
                 for comb in ranges:
                     if flow < comb < fhigh:
                         info += line[7]
@@ -564,21 +564,33 @@ def get_line_info_old(linedata, flow, fhigh):
         info = "lines:" + info
     return info
 
+
 def get_line_info(linedata, flow, fhigh):
     info = ""
     # if line files have been loaded include information on known lines
     if linedata is not None:
-
-        lines = linedata.loc[linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 0]
+        lines = linedata.loc[
+            linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 0
+        ]
         lines = lines.loc[
-            (lines["Frequency or frequency spacing [Hz]"] + lines[" Left width [Hz]" ] < fhigh) & 
-            (lines["Frequency or frequency spacing [Hz]"] - lines[" Right width [Hz]" ] > flow)]
+            (
+                lines["Frequency or frequency spacing [Hz]"] + lines[" Left width [Hz]"]
+                < fhigh
+            )
+            & (
+                lines["Frequency or frequency spacing [Hz]"]
+                - lines[" Right width [Hz]"]
+                > flow
+            )
+        ]
 
         # the spaces at the front of comments is important for the column name
         for index, line in lines.iterrows():
             info += line[" Comments"]
 
-        combs = linedata.loc[linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 1]
+        combs = linedata.loc[
+            linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 1
+        ]
 
         for index, comb in combs.iterrows():
             spacing = comb["Frequency or frequency spacing [Hz]"]
@@ -591,24 +603,27 @@ def get_line_info(linedata, flow, fhigh):
             if np.any((comb_freqs < fhigh) & (comb_freqs > flow)):
                 info += comb[" Comments"]
 
-    #print(info)
+    # print(info)
     if info == "" or info == np.nan or info == "nan" or info == "NaN":
         pass
     else:
         info = "lines:" + info
     return info
 
+
 def get_hwinj_info(hwinjtable, flow, fhigh):
     """ """
     hwinjs = hwinjtable.loc[
-            (hwinjtable["f0 (epoch start)"] < fhigh) & 
-            (hwinjtable["f0 (epoch start)"] > flow)]
+        (hwinjtable["f0 (epoch start)"] < fhigh)
+        & (hwinjtable["f0 (epoch start)"] > flow)
+    ]
 
     info = ""
     for index, line in hwinjs.iterrows():
         info += f"<a href='https://ldas-jobs.ligo.caltech.edu/~keith.riles/cw/injections/preO3/preO3_injection_params.html'> hwinj: {line['Pulsar']}</a>"
-    
+
     return info
+
 
 def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=None):
     """Loads in all hdf5 files and writes them into json format that can be loaded by javascript into summary pages"""
@@ -625,7 +640,6 @@ def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=No
     if hwinjfile is not None:
         if hwinjfile.endswith("html"):
             hwinjdata = pd.read_html(hwinjfile, header=0)[0]
-
 
     """
     linedata = None
@@ -647,28 +661,30 @@ def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=No
             for i in range(len(f[list(f.keys())[0]])):
                 temp_data = OrderedDict()
                 for key in table_order:
-                    if key not in list(f.keys()): continue
+                    if key not in list(f.keys()):
+                        continue
                     # convert the plot path to the location on the server (works only for LIGO servers at the moment)
                     if key == "plot_path":
                         path = f[key][i].decode()
                         if "/soap_2/" in path:
-                            path = path.replace("/soap_2/","/soap/")
-                        path = path.replace("/home/", "https://ldas-jobs.ligo.caltech.edu/~").replace("/public_html","")
+                            path = path.replace("/soap_2/", "/soap/")
+                        path = path.replace(
+                            "/home/", "https://ldas-jobs.ligo.caltech.edu/~"
+                        ).replace("/public_html", "")
                         temp_data[key] = path
                     else:
-                        temp_data[key] = np.round(f[key][i],2)
-                    #if i > 50:
+                        temp_data[key] = np.round(f[key][i], 2)
+                    # if i > 50:
                     #    sys.exit()
                     info = ""
                     if hwinjfile is not None:
                         info += get_hwinj_info(hwinjdata, f["fmin"][i], f["fmax"][i])
                     if linepaths is not None:
                         info += get_line_info(linedata, f["fmin"][i], f["fmax"][i])
-                    temp_data.update({"info":info})
+                    temp_data.update({"info": info})
                     temp_data.move_to_end("info")
                 json_data.append(temp_data)
-       
-    
+
     # sort the table so the highest lineaware statitics shjow first
     try:
         sorted_json_data = sorted(json_data, key=lambda d: d["lineaware_stat"])
@@ -680,17 +696,19 @@ def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=No
 
     # also save separate list of just the top statistics
     with open(os.path.join(root_dir, "table_toplist.json"), "w") as f:
-        json.dump(sorted_json_data[:int(0.1*len(sorted_json_data))], f)
+        json.dump(sorted_json_data[: int(0.1 * len(sorted_json_data))], f)
+
 
 def get_public_dir(root_dir):
-
     username = root_dir.split("/")[2]
     public = root_dir.split("/public_html/")[1]
     public_html = f"https://ldas-jobs.ligo.caltech.edu/~{username}/{public}"
     return public_html
 
-def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=False, hwinjfile=None):
 
+def get_html_string(
+    root_dir, linepaths=None, table_order=None, force_overwrite=False, hwinjfile=None
+):
     public_dir = get_public_dir(root_dir)
     print("pbdir: ", public_dir)
 
@@ -722,13 +740,17 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
                     if os.path.exists(os.path.join(subdir, "table.json")):
                         if force_overwrite:
                             try:
-                                make_json_from_hdf5(subdir, linepaths, table_order, hwinjfile=hwinjfile)
+                                make_json_from_hdf5(
+                                    subdir, linepaths, table_order, hwinjfile=hwinjfile
+                                )
                             except:
                                 print(f"WARNING: Cannot recreate json table")
                         else:
                             print(f"WARNING: No new updates to {subhead}, {subdir}")
                     else:
-                        make_json_from_hdf5(subdir, linepaths, table_order, hwinjfile=hwinjfile)
+                        make_json_from_hdf5(
+                            subdir, linepaths, table_order, hwinjfile=hwinjfile
+                        )
 
                     run_html = create_run_page(run_headings, obs_run=head)
                     with open(os.path.join(subdir, f"{subhead}.html"), "w") as f:
@@ -737,8 +759,8 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
 
     return run_headings, sub_headings
 
-def get_html_string_week(root_dir, linepath=None, table_order=None):
 
+def get_html_string_week(root_dir, linepath=None, table_order=None):
     run_headings = ""
     sub_headings = ""
     if os.path.exists(root_dir):
@@ -757,53 +779,88 @@ def get_html_string_week(root_dir, linepath=None, table_order=None):
 
                                 if os.path.exists(os.path.join(weekdir, "table.json")):
                                     try:
-                                        make_json_from_hdf5(weekdir, linepaths, table_order)
+                                        make_json_from_hdf5(
+                                            weekdir, linepaths, table_order
+                                        )
                                     except:
-                                        print(f"WARNING: Cannot recreate json table, no new updates to {subhead}, {weekdir}")
+                                        print(
+                                            f"WARNING: Cannot recreate json table, no new updates to {subhead}, {weekdir}"
+                                        )
                                 else:
                                     make_json_from_hdf5(weekdir, linepaths, table_order)
 
-                                run_html = create_line_run_page(line_run_headings, obs_run=head)
-                                with open(os.path.join(weekdir, f"{subhead}.html"), "w") as f:
+                                run_html = create_line_run_page(
+                                    line_run_headings, obs_run=head
+                                )
+                                with open(
+                                    os.path.join(weekdir, f"{subhead}.html"), "w"
+                                ) as f:
                                     f.write(run_html)
                             else:
                                 sub_headings += f'<l1><a href="./{head}/{subhead}/{subhead}.html"> {subhead} </a></li> </br>'
 
                                 if os.path.exists(os.path.join(subdir, "table.json")):
                                     try:
-                                        make_json_from_hdf5(subdir, linepaths, table_order)
+                                        make_json_from_hdf5(
+                                            subdir, linepaths, table_order
+                                        )
                                     except:
-                                        print(f"WARNING: Cannot recreate json table, no new updates to {subhead}, {subdir}")
+                                        print(
+                                            f"WARNING: Cannot recreate json table, no new updates to {subhead}, {subdir}"
+                                        )
                                 else:
                                     make_json_from_hdf5(subdir, linepaths, table_order)
 
-                                run_html = create_line_run_page(line_run_headings, obs_run=head)
-                                with open(os.path.join(subdir, f"{subhead}.html"), "w") as f:
+                                run_html = create_line_run_page(
+                                    line_run_headings, obs_run=head
+                                )
+                                with open(
+                                    os.path.join(subdir, f"{subhead}.html"), "w"
+                                ) as f:
                                     f.write(run_html)
                 sub_headings += "</ul>"
 
     return run_headings, sub_headings
 
-def write_pages(root_dir, linepaths, table_order, force_overwrite=False, hwinjfile=None, obs_run="run"):
-    """ Generate and write the html pages with the inputs from the directory structure"""
-    
+
+def write_pages(
+    root_dir,
+    linepaths,
+    table_order,
+    force_overwrite=False,
+    hwinjfile=None,
+    obs_run="run",
+):
+    """Generate and write the html pages with the inputs from the directory structure"""
+
     make_directory_structure(root_dir)
 
     astro_dir = os.path.join(root_dir, "astrophysical")
 
-    run_headings,sub_headings = get_html_string(astro_dir, linepaths=linepaths, table_order=table_order, force_overwrite=force_overwrite, hwinjfile=hwinjfile)
+    run_headings, sub_headings = get_html_string(
+        astro_dir,
+        linepaths=linepaths,
+        table_order=table_order,
+        force_overwrite=force_overwrite,
+        hwinjfile=hwinjfile,
+    )
 
     line_dir = os.path.join(root_dir, "lines")
 
-    #line_run_headings, line_sub_headings = get_html_string_week(line_dir, linepath=linepaths, table_order=table_order)
-    line_run_headings,line_sub_headings = get_html_string(line_dir, linepaths=linepaths, table_order=table_order, force_overwrite=force_overwrite, hwinjfile=hwinjfile)
+    # line_run_headings, line_sub_headings = get_html_string_week(line_dir, linepath=linepaths, table_order=table_order)
+    line_run_headings, line_sub_headings = get_html_string(
+        line_dir,
+        linepaths=linepaths,
+        table_order=table_order,
+        force_overwrite=force_overwrite,
+        hwinjfile=hwinjfile,
+    )
 
     # create pages
     home_html = create_home_page()
     usage_html = create_page_usage_page()
     astro_html = create_astro_page(run_headings, sub_headings)
     line_html = create_line_page(line_run_headings, line_sub_headings)
-
 
     # write pages
     with open(os.path.join(root_dir, "index.html"), "w") as f:
@@ -818,18 +875,28 @@ def write_pages(root_dir, linepaths, table_order, force_overwrite=False, hwinjfi
     with open(os.path.join(line_dir, "linepage.html"), "w") as f:
         f.write(line_html)
 
- 
 
 def main():
     import argparse
     from .soap_config_parser import SOAPConfig
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-c', '--config-file', help='config file', type=str, required=True, default=None)
-    parser.add_argument('-o', '--out-path', help='top level of output directories', type=str)
-    parser.add_argument('--force-overwrite', help='force overwrite tables', action=argparse.BooleanOptionalAction)
-                                                   
-    args = parser.parse_args()  
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    parser.add_argument(
+        "-c", "--config-file", help="config file", type=str, required=True, default=None
+    )
+    parser.add_argument(
+        "-o", "--out-path", help="top level of output directories", type=str
+    )
+    parser.add_argument(
+        "--force-overwrite",
+        help="force overwrite tables",
+        action=argparse.BooleanOptionalAction,
+    )
+
+    args = parser.parse_args()
 
     if args.config_file is not None:
         if not os.path.isfile(args.config_file):
@@ -837,8 +904,12 @@ def main():
         cfg = SOAPConfig(args.config_file)
 
     else:
-        #outpath,minfreq,maxfreq,obs_run="O3",vitmapmodelfname=None, spectmodelfname = None, vitmapstatmodelfname = None, allmodelfname = None, sub_dir = "soap",
-        cfg = {"output":{}, "data":{}, "input":{}, }
+        # outpath,minfreq,maxfreq,obs_run="O3",vitmapmodelfname=None, spectmodelfname = None, vitmapstatmodelfname = None, allmodelfname = None, sub_dir = "soap",
+        cfg = {
+            "output": {},
+            "data": {},
+            "input": {},
+        }
 
     if args.out_path:
         cfg["output"]["save_directory"] = args.out_path
@@ -852,9 +923,27 @@ def main():
     else:
         hwinjfile = None
 
-    table_order = ["fmin", "fmax", "lineaware_stat", "H1_viterbistat", "L1_viterbistat", "CNN_vitmap_stat", "CNN_spect_stat", "CNN_vitmapstat_stat", "CNN_all_stat", "plot_path"]
+    table_order = [
+        "fmin",
+        "fmax",
+        "lineaware_stat",
+        "H1_viterbistat",
+        "L1_viterbistat",
+        "CNN_vitmap_stat",
+        "CNN_spect_stat",
+        "CNN_vitmapstat_stat",
+        "CNN_all_stat",
+        "plot_path",
+    ]
 
-    write_pages(os.path.dirname(os.path.normpath(cfg["output"]["save_directory"])), linepaths, table_order, force_overwrite=args.force_overwrite, hwinjfile=hwinjfile)
+    write_pages(
+        os.path.dirname(os.path.normpath(cfg["output"]["save_directory"])),
+        linepaths,
+        table_order,
+        force_overwrite=args.force_overwrite,
+        hwinjfile=hwinjfile,
+    )
+
 
 if __name__ == "__main__":
     main()

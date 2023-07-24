@@ -4,6 +4,7 @@ import numpy as np
 import configparser
 import soapcw
 
+
 def load_model(modelfile, device="cpu"):
     """
     Load in model weights from config and weights
@@ -26,6 +27,7 @@ def load_model(modelfile, device="cpu"):
     pre_model.device = device
 
     return model_soap
+
 
 def load_model_from_config(config, weights, device="cpu"):
     """
@@ -58,9 +60,8 @@ def load_model_from_config(config, weights, device="cpu"):
         fdim=config["neville"]["fdim"],
         dropout=config["neville"]["dropout"],
         dist_type=config["neville"]["dist_type"],
-        device=device
-        ).to(device)
-
+        device=device,
+    ).to(device)
 
     model_soap.load_state_dict(pre_model_weights["model_state_dict"])
 

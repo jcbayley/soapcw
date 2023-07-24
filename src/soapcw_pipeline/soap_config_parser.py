@@ -3,19 +3,31 @@ import json
 import regex
 import os
 
-class SOAPConfig():
 
+class SOAPConfig:
     def __init__(self, config_file):
         cfg = configparser.ConfigParser()
         cfg.read(config_file)
 
         self.config_file = os.path.abspath(config_file)
-        self.float_list = ["band_starts","band_ends","band_widths"]
-        self.int_list = ["strides","fc_layers","img_dim"]
-        self.string_list = ["load_directory","save_options"]
+        self.float_list = ["band_starts", "band_ends", "band_widths"]
+        self.int_list = ["strides", "fc_layers", "img_dim"]
+        self.string_list = ["load_directory", "save_options"]
         self.tuple_list = ["conv_layers"]
-        self.floats = ["band_load_size", "snr_width_line", "snr_width_signal", "prob_line", "left_right_prob", "det1_prob", "det2_prob","snrmin","snrmax","learning_rate","data_load_size"]
-        self.ints = ["memory", "request_disk", "n_jobs", "n_summed_sfts","n_epochs"]
+        self.floats = [
+            "band_load_size",
+            "snr_width_line",
+            "snr_width_signal",
+            "prob_line",
+            "left_right_prob",
+            "det1_prob",
+            "det2_prob",
+            "snrmin",
+            "snrmax",
+            "learning_rate",
+            "data_load_size",
+        ]
+        self.ints = ["memory", "request_disk", "n_jobs", "n_summed_sfts", "n_epochs"]
         self.bools = ["resize_image", "overwrite_files"]
 
         self.config = self.parse_config(cfg)
@@ -28,13 +40,13 @@ class SOAPConfig():
             val = val.strip("[").strip("]").strip("(").strip(")").split(",")
         else:
             val = [val.strip("[").strip("]").strip("(").strip(")").strip(",")]
-        
+
         if partype == "float":
             val = [float(v) for v in val]
         elif partype == "int":
             val = [int(v) for v in val]
         elif partype == "string":
-            val = [v.replace('"','').replace(' ','') for v in val]
+            val = [v.replace('"', "").replace(" ", "") for v in val]
         else:
             raise Exception(f"Type {partype} not supported")
 
@@ -47,9 +59,8 @@ class SOAPConfig():
             return True
         else:
             raise Exception("Value not of Bool type")
-            
-    def parse_config(self, cfg):
 
+    def parse_config(self, cfg):
         parsed_dict = {}
         for key, val in cfg.items():
             parsed_dict[key] = {}
@@ -69,11 +80,21 @@ class SOAPConfig():
                     parsed_dict[key][key2] = self.get_bool(val2)
                 elif key2 in self.tuple_list:
                     temp_out = []
-                    for mod in regex.split(r"\s*,\s*(?![^(]*\))", val2.strip("[").strip("]")):
+                    for mod in regex.split(
+                        r"\s*,\s*(?![^(]*\))", val2.strip("[").strip("]")
+                    ):
                         if mod == "":
                             continue
-                        out_tuple = tuple([int(vl) for vl in mod.strip("\n").strip("(").strip(")").split(",")])
-    
+                        out_tuple = tuple(
+                            [
+                                int(vl)
+                                for vl in mod.strip("\n")
+                                .strip("(")
+                                .strip(")")
+                                .split(",")
+                            ]
+                        )
+
                         temp_out.append(out_tuple)
 
                     parsed_dict[key][key2] = temp_out
@@ -82,6 +103,6 @@ class SOAPConfig():
                     if val2 in ["none", "None"]:
                         parsed_dict[key][key2] = None
                     else:
-                        parsed_dict[key][key2] = val2.replace('"','')
-                
+                        parsed_dict[key][key2] = val2.replace('"', "")
+
         return parsed_dict
