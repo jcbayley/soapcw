@@ -3,15 +3,10 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
-
-recursive-include tests *
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
-
-recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+include Makefile
 
 global-include *.pyx
 
-include pipeline/css/general.css
-include pipeline/scripts/table_scripts.js
+include src/soapcw_pipeline/css/general.css
+include src/soapcw_pipeline/scripts/table_scripts.js
 
