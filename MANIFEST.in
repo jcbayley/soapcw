@@ -7,6 +7,6 @@ include Makefile
 
 global-include *.pyx
 
-include pipeline/css/general.css
-include pipeline/scripts/table_scripts.js
+include src/soapcw_pipeline/css/general.css
+include src/soapcw_pipeline/scripts/table_scripts.js
 

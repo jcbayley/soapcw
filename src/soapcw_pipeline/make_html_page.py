@@ -10,7 +10,7 @@ import pandas as pd
 
 def make_directory_structure(root_dir):
 
-    my_resources = importlib_resources.files("pipeline")
+    my_resources = importlib_resources.files("soapcw_pipeline")
     cssfile = (my_resources / "css"/ "general.css")
     javascriptfile = (my_resources / "scripts"/ "table_scripts.js")
     

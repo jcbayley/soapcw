@@ -6,6 +6,10 @@ requires = [
     ]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+license-files = [ "LICENSE" ]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["soapcw*", "soapcw_pipeline"] 
@@ -95,9 +99,6 @@ soapcw-cnn-make-data-dag = "soapcw.cnn.cnn_data_dag_gen:main"
 soapcw-cnn-make-data = "soapcw.cnn.cnn_data_gen:main"
 soapcw-cnn-train-model = "soapcw.cnn.train_model:main"
 
-[tool.setuptools]
-license-files = [ "LICENSE" ]
-include-package-data = true
 
 
 
