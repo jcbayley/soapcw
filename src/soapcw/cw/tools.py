@@ -9,6 +9,7 @@ DATA_PATH = os.path.join(this_dir, "data", "data.txt")
 LAL_EPHEMERIS_URL = "https://git.ligo.org/lscsoft/lalsuite/raw/master/lalpulsar/lib/{}"
 EPHEMERIS_CACHE_DIR = appdirs.user_cache_dir(appname="soapcw", appauthor=False)
 
+
 def download_ephemeris_file(url):
     """
     !!! This is taken from Matt pitkins cwinpy package https://git.ligo.org/cwinpy/cwinpy/-/blob/master/cwinpy/utils.py !!!
@@ -52,5 +53,3 @@ def download_ephemeris_file(url):
         fp.write(ephdata.content)
 
     return fpath
-
-

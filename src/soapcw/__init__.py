@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from importlib.metadata import PackageNotFoundError, version
 
 __author__ = """Joe Bayley"""
-__email__ = 'joseph.bayley@glasgow.ac.uk'
+__email__ = "joseph.bayley@glasgow.ac.uk"
 try:
     __version__ = version(__name__)
 except PackageNotFoundError:
@@ -16,5 +16,3 @@ from .neville import __init__
 from .line_aware_stat import __init__
 from .cw import __init__
 from . import soap_config_parser
-
-
