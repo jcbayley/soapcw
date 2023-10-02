@@ -12,7 +12,7 @@
 SOAP: Applying the Viterbi algorithm to search for sources
 of continuous gravitational waves.
 
-<img src="https://raw.githubusercontent.com/jcbayley/soapcw/main/src/pipeline/images/vitmap_ex.png" alt="Vitmap"/>
+<img src="https://raw.githubusercontent.com/jcbayley/soapcw/main/src/soapcw_pipeline/images/vitmap_ex.png" alt="Vitmap"/>
 
 SOAP is primarily developed to search for continuous sources of
 gravitational waves, however, has a more general application to search
