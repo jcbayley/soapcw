@@ -784,7 +784,28 @@ def get_html_string_week(root_dir, linepath=None, table_order=None):
 
     return run_headings, sub_headings
 
-def write_pages(root_dir, linepaths, table_order, force_overwrite=False, hwinjfile=None, obs_run="run"):
+def make_summary_histogram(root_dir, json_filename):
+    with open(json_filename,"r") as f:
+        data = json.load(f)
+
+    band_ranges = [(20,500),(500,1000), (1000,1500), (1500,2000)]
+    stats = {}
+    for band in band_ranges:
+        stats[band[0]] = np.array([(td["lineaware_stat"], td["fmin"]) for td in data if band[0] < td["fmin"] < band[1]])
+
+    fig, ax = plt.subplots(nrows = 4, figsize = (5,10))
+    for i, st in enumerate(band_ranges):
+        hst = ax[i].hist(np.array(sorted(stats[st[0]], key=lambda x: x[0]))[10:-10, 0], bins = 100, label = f"{str(st)} Hz")
+        ax[i].legend(fontsize="17")
+        ax[i].set_ylabel("count", fontsize="17")
+        #ax[i].set_xlabel(f"Viterbi statistic [{st[0]} - {st[1]} Hz]", fontsize="17")
+        ax[i].set_xlabel(f"Viterbi statistic", fontsize="17")
+        #ax[i].set_yscale("log")
+    fig.tight_layout()
+
+    fig.savefig(os.path.join(root_dir, "summary_histogram.png"))
+
+def write_pages(cfg, root_dir, linepaths, table_order, force_overwrite=False, hwinjfile=None, obs_run="run"):
     """ Generate and write the html pages with the inputs from the directory structure"""
     
     make_directory_structure(root_dir)
@@ -854,7 +875,7 @@ def main():
 
     table_order = ["fmin", "fmax", "lineaware_stat", "H1_viterbistat", "L1_viterbistat", "CNN_vitmap_stat", "CNN_spect_stat", "CNN_vitmapstat_stat", "CNN_all_stat", "plot_path"]
 
-    write_pages(os.path.dirname(os.path.normpath(cfg["output"]["save_directory"])), linepaths, table_order, force_overwrite=args.force_overwrite, hwinjfile=hwinjfile)
+    write_pages(cfg, os.path.dirname(os.path.normpath(cfg["output"]["save_directory"])), linepaths, table_order, force_overwrite=args.force_overwrite, hwinjfile=hwinjfile)
 
 if __name__ == "__main__":
     main()
