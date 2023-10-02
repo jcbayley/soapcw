@@ -149,6 +149,9 @@ def run_soap_twodet(
 
 def load_sft_band(config, filenames, minfreq, maxfreq, tmin, tmax, verbose = False):
 
+    # veto every integer frequency (all will be contaminated with harmonics)
+    veto_list = np.arange(minfreq, maxfreq)
+
     print("summedtype", type(config["data"]["n_summed_sfts"]))
     sft = cw.LoadSFT(
         filenames,
@@ -161,7 +164,8 @@ def load_sft_band(config, filenames, minfreq, maxfreq, tmin, tmax, verbose = Fal
         fmax=maxfreq,
         tmin=tmin,
         tmax=tmax,
-        verbose=True
+        verbose=True,
+        vetolist=veto_list
         )
 
     # set how many frequency bins to average over for each frequency band (based on spread of signal in 1800s sft)

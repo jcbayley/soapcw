@@ -468,6 +468,7 @@ def run_soap_in_band(config, minfreq, maxfreq, weekstarttime=None, verbose = Fal
             tmin = np.min(sttime) 
             tmax = np.max(sttime) + 1800 # start of last sft plus length (in this case we are only using 1800s sfts)
             #tmax = min(sttime) + 48*10*1800 # smaller range for testing
+
     
     # get the sfts in the specified time range 
     start_range = time.time()
