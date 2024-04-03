@@ -10,7 +10,7 @@ except PackageNotFoundError:
     # package is not installed
     __version__ = "unknown"
 from .soap import single_detector, two_detector, three_detector, single_detector_gaps
-from .tools import tools, plots
+from .tools import tools, plots, narrowband_sfts
 from .cnn import __init__
 from .neville import __init__
 from .line_aware_stat import __init__
