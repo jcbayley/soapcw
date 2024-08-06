@@ -38,10 +38,11 @@ def write_plot_subfile(sub_filename,config,config_file,cdirs,comment,verbose=Tru
                 
 def write_html_subfile(sub_filename,config, config_file, cdirs, comment, verbose=True):
 
+    execute = os.path.join(os.path.split(sys.executable)[0],config["scripts"]["html_exec"])
     with open(sub_filename,'w') as f:
         f.write('# filename: {}\n'.format(sub_filename))
         f.write('universe = vanilla\n')
-        f.write('executable = {}\n'.format(config["scripts"]["html_exec"]))
+        f.write('executable = {}\n'.format(execute))
         #f.write('enviroment = ""\n')
         f.write('getenv  = True\n')
         f.write('RequestMemory = {} \n'.format(config["condor"]["memory"]))

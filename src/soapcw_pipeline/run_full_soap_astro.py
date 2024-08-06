@@ -458,8 +458,15 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
 
     print("numsfts: {}".format(len(sftlist)))
     print("Time find fnames: ", time.time() - start_load)
-    tmin = np.min(sttime) 
-    tmax = np.max(sttime) + 1800 # start of last sft plus length (in this case we are only using 1800s sfts
+    if config["data"]["start_time"] not in [False, "None", "none", None, -1]:
+        tmin = config["data"]["start_time"]
+    else:
+        tmin = np.min(sttime) 
+    if config["data"]["end_time"] not in [False, "None", "none", None, -1]:
+        tmax = config["data"]["end_time"]
+    else:
+        tmax = np.max(sttime) + 1800 # start of last sft plus length (in this case we are only using 1800s sfts
+
     #tmax = min(sttime) + 48*10*1800 # smaller range for testing
     print(f"minmaxtime, {tmin} --> {tmax}")
     
