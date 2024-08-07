@@ -454,6 +454,43 @@ class GenerateSignal:
 
         return timeseries
 
+
+class GenerateBinarySignal(GenerateSignal):
+
+    def __init__(self):
+        super().__init__()
+
+
+
+    def get_pulsar_path(self,epochs,det,edat=None):
+        """
+        find the pulsar path in the time frequency plane, given the epochs, parameters and ephemeris data
+        args                                                                                                                                 
+        ------                                                                                                                               
+        epochs : start times of each sft                                                                                                     
+        edat   : ephermeris data for earth and sun                                                                                           
+        det    : detector i.e 'H1'                                                                                                           
+        params : parameters of the pulsar                                                                                                    
+        """
+        if not hasattr(self, "det_vels") or len(epochs) != len(self.det_vels):
+            self.get_detector_velocities(epochs,det,edat)
+        
+        cosd = np.cos(self.delta)
+        cosa = np.cos(self.alpha)
+        sind = np.sin(self.delta)
+        sina = np.sin(self.alpha)
+
+        vDotn_c = cosd * cosa * self.det_vels[:,0] + cosd * sina  * self.det_vels[:,1] + sind * self.det_vels[:,2]
+
+        if self.tref is None:
+            self.tref = epochs[0]
+
+        timeDiff = epochs - self.tref
+        fhat = self.f[0] + timeDiff*self.f[1]
+        
+        return fhat * (1 + vDotn_c)
+
+
 class SimulateTimeseries:
 
     def __init__(self, parent):

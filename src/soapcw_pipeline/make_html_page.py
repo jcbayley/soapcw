@@ -14,6 +14,7 @@ def make_directory_structure(root_dir):
     my_resources = importlib_resources.files("soapcw_pipeline")
     cssfile = (my_resources / "css"/ "general.css")
     javascriptfile = (my_resources / "scripts"/ "table_scripts.js")
+    javascriptfiletoplist = (my_resources / "scripts"/ "table_scripts_toplist.js")
     
     if not os.path.isdir(os.path.join(root_dir, "css")):
         os.makedirs(os.path.join(root_dir, "css"))
@@ -23,6 +24,7 @@ def make_directory_structure(root_dir):
 
     shutil.copy(cssfile, os.path.join(root_dir, "css/"))
     shutil.copy(javascriptfile, os.path.join(root_dir, "scripts/"))
+    shutil.copy(javascriptfiletoplist, os.path.join(root_dir, "scripts/"))
     """
     shutil.copy("../css/general.css", os.path.join(root_dir, "css/"))
     shutil.copy("../scripts/table_scripts.js", os.path.join(root_dir, "scripts/"))
@@ -283,7 +285,7 @@ def create_line_page(run_headings, sub_headings):
 
 
 
-def create_run_page(run_headings, obs_run="run"):
+def create_run_page(run_headings, obs_run="run", toplist=''):
 
 
     html = f'''
@@ -385,7 +387,7 @@ def create_run_page(run_headings, obs_run="run"):
     <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
     </div>
 
-    <script type="text/javascript" src="../../../scripts/table_scripts.js"></script>
+    <script type="text/javascript" src="../../../scripts/table_scripts{toplist}.js"></script>
 
     </body>
 
@@ -602,9 +604,14 @@ def get_line_info(linedata, flow, fhigh):
 
 def get_hwinj_info(hwinjtable, flow, fhigh):
     """ """
+
     hwinjs = hwinjtable.loc[
-            (hwinjtable["f0 (epoch start)"] < fhigh) & 
-            (hwinjtable["f0 (epoch start)"] > flow)]
+            ((hwinjtable["f0 (epoch start)"] < fhigh) & 
+            (hwinjtable["f0 (epoch start)"] > flow)) | 
+            ((hwinjtable["f0 (epoch start)"] > fhigh) & 
+            (hwinjtable["f0 (epoch stop)"] < fhigh))| 
+            ((hwinjtable["f0 (epoch start)"] > flow) & 
+            (hwinjtable["f0 (epoch stop)"] < flow))]
 
     info = ""
     for index, line in hwinjs.iterrows():
@@ -612,7 +619,7 @@ def get_hwinj_info(hwinjtable, flow, fhigh):
     
     return info
 
-def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=None):
+def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=None, freqbands = [20,500,1000,1500,2000]):
     """Loads in all hdf5 files and writes them into json format that can be loaded by javascript into summary pages"""
     hdf5dir = os.path.join(root_dir, "data")
 
@@ -680,9 +687,26 @@ def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=No
     with open(os.path.join(root_dir, "table.json"), "w") as f:
         json.dump(sorted_json_data, f)
 
+    # find the top statistics in each band
+    def filter_json_by_key_range(json_data, key, min_value, max_value):
+        return [d for d in json_data if min_value <= d.get(key, float('inf')) < max_value]
+
+
+    toplistjson = []
+    for bind in range(len(freqbands) - 1):
+        f0,f1 = freqbands[bind], freqbands[bind+1]
+        # filter json to in band
+        filtered_json_data = filter_json_by_key_range(json_data, "fmin", f0, f1)
+        # take top 2% of stats in band
+        fraction_keep = 0.97
+        sorted_filtered_json_data = sorted(filtered_json_data, key=lambda d: d["lineaware_stat"])[int(fraction_keep*len(filtered_json_data)):]
+        print(f0, f1, len(sorted_filtered_json_data), len(sorted_filtered_json_data), len(filtered_json_data))
+        toplistjson.extend(sorted_filtered_json_data)
+
+    print(len(toplistjson))
     # also save separate list of just the top statistics
     with open(os.path.join(root_dir, "table_toplist.json"), "w") as f:
-        json.dump(sorted_json_data[:int(0.1*len(sorted_json_data))], f)
+        json.dump(toplistjson, f)
 
 def get_public_dir(root_dir):
 
@@ -725,8 +749,9 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
                         if force_overwrite:
                             try:
                                 make_json_from_hdf5(subdir, linepaths, table_order, hwinjfile=hwinjfile)
-                            except:
+                            except Exception as e:
                                 print(f"WARNING: Cannot recreate json table")
+                                print(e)
                         else:
                             print(f"WARNING: No new updates to {subhead}, {subdir}")
                     else:
@@ -740,6 +765,10 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
 
                     run_html = create_run_page(run_headings, obs_run=head)
                     with open(os.path.join(subdir, f"{subhead}.html"), "w") as f:
+                        f.write(run_html)
+
+                    run_html = create_run_page(run_headings, obs_run=head, toplist='_toplist')
+                    with open(os.path.join(subdir, f"{subhead}_toplist.html"), "w") as f:
                         f.write(run_html)
             sub_headings += "</ul>"
 

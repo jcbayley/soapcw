@@ -456,18 +456,24 @@ def run_soap_in_band(config, minfreq, maxfreq, weekstarttime=None, verbose = Fal
     # define start and end times
     print("numsfts: {}".format(len(sftlist)))
     print("Time find fnames: ", time.time() - start_load)
-    if "start_time" in config["data"].keys():
-        tmin = float(config["data"]["start_time"])
-        tmax = float(config["data"]["end_time"])
+
+    if config["data"]["start_time"] not in [False, "None", "none", None, -1]:
+        tmin = config["data"]["start_time"]
     else:
         if weekstarttime is not None:
             weeklength = 3600*24*7
             tmin = weekstarttime
-            tmax = tmin + weeklength
         else:
             tmin = np.min(sttime) 
-            tmax = np.max(sttime) + 1800 # start of last sft plus length (in this case we are only using 1800s sfts)
-            #tmax = min(sttime) + 48*10*1800 # smaller range for testing
+            
+    if config["data"]["end_time"] not in [False, "None", "none", None, -1]:
+        tmax = config["data"]["end_time"]
+    else:
+        if weekstarttime is not None:
+            weeklength = 3600*24*7
+            tmax = tmin + weeklength
+        else:
+            tmax = np.max(sttime) + 1800 # start of last sft plus length (in this case we are only using 1800s sfts
 
     
     # get the sfts in the specified time range 

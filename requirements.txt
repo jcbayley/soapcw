@@ -2,7 +2,7 @@ matplotlib
 Cython
 scipy
 lalsuite
-numpy
+numpy<=1.26.4
 torch
 appdirs
 h5py

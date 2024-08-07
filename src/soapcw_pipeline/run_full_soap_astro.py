@@ -120,13 +120,26 @@ def run_soap_twodet(
     ind_end
     ):
     #new non optimised values
-    lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline_1det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]}_{config["lookuptable"]["snr_width_signal"]}_{config["lookuptable"]["prob_line"]}.pkl')
-    lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline_2det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]}_{config["lookuptable"]["snr_width_signal"]}_{config["lookuptable"]["prob_line"]}.pkl')
+    if config["lookuptable"]["lookup_type"] == "amplitude":
+        amp="amp"
+    else:
+        amp=""
+    lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]}_{config["lookuptable"]["snr_width_signal"]}_{config["lookuptable"]["prob_line"]}.pkl')
+    lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]}_{config["lookuptable"]["snr_width_signal"]}_{config["lookuptable"]["prob_line"]}.pkl')
 
     # define the transition matrix for soap
-    tr = soap.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
-                                        config["transitionmatrix"]["det1_prob"],
-                                        config["transitionmatrix"]["det2_prob"])
+    if config["transitionmatrix"]["extra_left_right"] == False:
+        tr = soap.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
+                                            config["transitionmatrix"]["det1_prob"],
+                                            config["transitionmatrix"]["det2_prob"],
+                                            log=True)
+    else:
+        tr = soap.tools.transition_matrix_2d_5jump(config["transitionmatrix"]["left_right_prob"],
+                                                0.5*config["transitionmatrix"]["left_right_prob"],
+                                                config["transitionmatrix"]["det1_prob"],
+                                                config["transitionmatrix"]["det2_prob"],
+                                                log=True)
+
 
     # run soap search using the two detector line aware statistic (one detector in gaps)
 
@@ -445,8 +458,15 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
 
     print("numsfts: {}".format(len(sftlist)))
     print("Time find fnames: ", time.time() - start_load)
-    tmin = np.min(sttime) 
-    tmax = np.max(sttime) + 1800 # start of last sft plus length (in this case we are only using 1800s sfts
+    if config["data"]["start_time"] not in [False, "None", "none", None, -1]:
+        tmin = config["data"]["start_time"]
+    else:
+        tmin = np.min(sttime) 
+    if config["data"]["end_time"] not in [False, "None", "none", None, -1]:
+        tmax = config["data"]["end_time"]
+    else:
+        tmax = np.max(sttime) + 1800 # start of last sft plus length (in this case we are only using 1800s sfts
+
     #tmax = min(sttime) + 48*10*1800 # smaller range for testing
     print(f"minmaxtime, {tmin} --> {tmax}")
     
@@ -620,14 +640,15 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
             
         # set gaps in viterbi track to nan for plots
         H_track = soaprun.vit_track1
-        H_track[sft.H1.downsamp_summed_norm_sft_power[:,0] == degfree] == np.nan
+        H_track[np.nanmean(sft.H1.downsamp_summed_norm_sft_power,axis=1) == degfree] == np.nan
         L_track = soaprun.vit_track2
-        L_track[sft.L1.downsamp_summed_norm_sft_power[:,0] == degfree] == np.nan
+        L_track[np.nanmean(sft.L1.downsamp_summed_norm_sft_power, axis=1) == degfree] == np.nan
         
         # set gaps to nan in noise estimates
         for det in getattr(sft,"det_names"):
-            temp_noise[det][sft.H1.downsamp_summed_norm_sft_power[:,0] == degfree] = np.nan
+            temp_noise[det][np.nanmean(getattr(sft, det).downsamp_summed_norm_sft_power, axis=1) == degfree] = np.nan
             
+            temp_noise[det][temp_noise[det] > (np.nanmean(temp_noise[det]) + 3*np.nanstd(temp_noise[det]))] = np.nan
         if len(H_track) != sum_nsft:
             sum_nsft = len(H_track)
             print("sum_nsft not equal to length of viterbi")

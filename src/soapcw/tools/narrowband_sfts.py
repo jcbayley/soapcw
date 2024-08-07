@@ -61,8 +61,7 @@ def get_filelist(out_path, sftdir, data_type):
     return filelist_fname
 
 def split_sfts_list(
-    detector, 
-    filelist_fname, 
+    sft_list, 
     output_dir,
     fband_start,
     fband_end,
@@ -74,14 +73,13 @@ def split_sfts_list(
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    sft_list = get_sft_filelist(filelist_fname)
+    #sft_list = get_sft_filelist(filelist_fname)
 
     #runstr = "find {} -name *.sft| sort -n -k4 -t '-'| xargs lalapps_splitSFTs -d {} -fs {} -fe {} -fb {} -fx {} -n {} -as 0 -- ".format(sft_path, detector, band_start, band_end, band_width, band_overlap, out_path)
     
     for fname in sft_list:
         try:
-            runstr = "lalpulsar_splitSFTs -d {} -fs {} -fe {} -fb {} -fx {} -n {} -as 0 -- {}".format(
-                detector, 
+            runstr = "lalpulsar_splitSFTs -fs {} -fe {} -fb {} -fx {} -n {} -as 0 -- {}".format(
                 fband_start, 
                 fband_end, 
                 fband_width, 

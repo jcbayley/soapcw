@@ -250,6 +250,7 @@ class LineAwareStatistic:
         fname = os.path.join(outdir,"{}{}_{}det_{}degfree_{}_{}_{}.pkl".format(log_str,stat_type,self.ndet,self.kN,self.signal_prior_width,self.line_prior_width,self.noise_line_model_ratio))
         
         if os.path.isfile(fname):
+            print(f"File {fname} already exists")
             pass
         else:
             with open(fname,'wb') as f:

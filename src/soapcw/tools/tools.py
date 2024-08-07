@@ -148,6 +148,41 @@ def transition_matrix_2d_5(leftright1,leftright2,sep2,sep3,log=True):
     if not log:
         return tr/np.sum(tr)
 
+def transition_matrix_2d_5jump(leftright1,leftright2,sep2,sep3,log=True):
+    '''
+    generate a symmetric transition matrix for 0 memory and 1 detector, allowing 2 jumps either side
+    args
+    -------
+    par1: float
+        ratio of left and rightjump elements to the centre jump element of the transition matrix
+    par2: float
+        ratio detector 1 being in left or right bin compared to reference
+    par3: float
+        ratio detector 2 being in left or right bin compared to reference
+    kwargs
+    ------
+    log: bool
+        return the log of the transition matrix if True, just probabilities if false
+    returns 
+    -------
+    tr: array
+        3x3 array of transition probabilities 
+    '''
+    j1 = 1.
+    jlr1 = j1/leftright1
+    jlr2 = j1/leftright2
+    plr1 = j1/sep2
+    plr2 = j1/sep3
+    tr_j= np.array([jlr2,jlr1,j1,jlr1,jlr2])
+    tr_p1 = np.array([plr1,j1,plr1])
+    tr_p2 = np.array([plr2,j1,plr2])
+    tr_p = np.array([tr_p1[0]*tr_p2,tr_p1[1]*tr_p2,tr_p1[2]*tr_p2])
+    tr = [tr_p*tr_j[0],tr_p*tr_j[1],tr_p*tr_j[2],tr_p*tr_j[3],tr_p*tr_j[4]]
+    if log:
+        return np.log(tr/np.sum(tr))
+    if not log:
+        return tr/np.sum(tr)
+
 
 def track_power(track,data):
     '''
