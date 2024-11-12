@@ -457,8 +457,8 @@ def run_soap_in_band(config, minfreq, maxfreq, weekstarttime=None, verbose = Fal
     print("numsfts: {}".format(len(sftlist)))
     print("Time find fnames: ", time.time() - start_load)
 
-    if config["data"]["start_time"] not in [False, "None", "none", None, -1]:
-        tmin = config["data"]["start_time"]
+    if config["data"]["tmin"] not in [False, "None", "none", None, -1]:
+        tmin = config["data"]["tmin"]
     else:
         if weekstarttime is not None:
             weeklength = 3600*24*7
@@ -466,8 +466,8 @@ def run_soap_in_band(config, minfreq, maxfreq, weekstarttime=None, verbose = Fal
         else:
             tmin = np.min(sttime) 
             
-    if config["data"]["end_time"] not in [False, "None", "none", None, -1]:
-        tmax = config["data"]["end_time"]
+    if config["data"]["tmax"] not in [False, "None", "none", None, -1]:
+        tmax = config["data"]["tmax"]
     else:
         if weekstarttime is not None:
             weeklength = 3600*24*7
@@ -521,6 +521,8 @@ def run_soap_in_band(config, minfreq, maxfreq, weekstarttime=None, verbose = Fal
     # define varialbes of sft
     detector = sft.det_names[0]
     tsft = getattr(sft,detector).tsft
+    print(detector)
+    print(dir(getattr(sft, detector)))
     sum_nsft = len(getattr(sft,detector).summed_epochs)
     bin_width = stride/float(tsft)
     nbins = len(getattr(sft,detector).downsamp_frequencies)

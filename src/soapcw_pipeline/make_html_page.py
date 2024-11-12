@@ -699,7 +699,11 @@ def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=No
         filtered_json_data = filter_json_by_key_range(json_data, "fmin", f0, f1)
         # take top 2% of stats in band
         fraction_keep = 0.97
-        sorted_filtered_json_data = sorted(filtered_json_data, key=lambda d: d["lineaware_stat"])[int(fraction_keep*len(filtered_json_data)):]
+        if "lineaware_stat" in filtered_json_data[0]:
+            sorted_filtered_json_data = sorted(filtered_json_data, key=lambda d: d["lineaware_stat"])[int(fraction_keep*len(filtered_json_data)):]
+        else:
+            sorted_filtered_json_data = sorted(filtered_json_data, key=lambda d: d["H1_viterbistat"])[int(fraction_keep*len(filtered_json_data)):]
+
         print(f0, f1, len(sorted_filtered_json_data), len(sorted_filtered_json_data), len(filtered_json_data))
         toplistjson.extend(sorted_filtered_json_data)
 
