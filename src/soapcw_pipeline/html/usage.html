@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <title>Usage</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/general.css" media="screen" type="text/css">
+    </head>
+    <body>
+
+    <div class="navbar">
+    <a href="index.html" class="active">Home</a>
+    <a href="astrophysical/astropage.html">Astrophysical Search</a>
+    <a href="lines/linepage.html">Line Search</a>
+    <a href=""https://git.ligo.org/joseph.bayley/soapcw"" class="right">Code</a>
+    <a href="page_usage.html" class="right">About/Usage</a>
+    </div>
+
+    <div class="row">
+    <div class="side">
+        <h2>SOAP</h2>
+        <div><img style="width:50%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/logo/drawing.png" alt="SOAP logo"/></div>
+        <p>The SOAP search is a rapid search for continuous gravitational waves using the Viterbi algorithm</p>
+        <h3>Links</h3>
+        <p>GitLab: <a href="https://git.ligo.org/joseph.bayley/soapcw">https://git.ligo.org/joseph.bayley/soapcw</a></p>
+        <p><a href="https://joseph.bayley.docs.ligo.org/soapcw/index.html">Documentation</a></p>
+
+        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006">Methods Paper</a></p>
+        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024">CNN followup paper</a></p>
+        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022">Parameter estimation paper</a></p>
+    </div>
+    <div class="main">
+        <h2>How to use these pages</h2>
+        The run pages are built around a table of each of the frequency bands that are run on and an image showing the output spectrograms and viterbi tracks along with other information.
+    
+        To filter which frequency bands to use the box to the top left gives a set of options
+
+        <img style="width:30%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/options.png" />
+        <ul>
+        <li> In the first box one can sort the table based on one of the selected headings in ascending or descending order. </li>
+        <li> In the second box there is a choice of a number of variables, checking these will include them in the table. </li>
+        <li> The third box filters the frequency ranges, input the ranges and clikc filter to change the frequency range </li>
+        <li> The fourth box has two buttons (last page, next page), these move between the table pages forwards and backwards </li>
+        <ul>
+
+        <img style="width:30%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/table.png" />
+
+        The table then shows a list of different frequency bands defined by the fmin and fmax.
+        By default it shows the lineaware stat, which is the line aware statistic output from the SOAP search, and the info column. 
+        The info column contains extra information about which is known about that band, i.e. info from line investigations or hw injections
+
+        By clicking on one of these cells it shows a plot and a table containing all of the information about this band.
+        The table of information looks like this:
+
+        <img style="width:100%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/band_summary.png" />
+
+        Which contains all table columns. The hide track button is used to toggle the viterbi track in the plot. 
+        The previous and next buttons cycle through the table in order.
+
+        <img style="width:60%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/plot.png" />
+
+        The plot then contains a number of panels showing information about the band.
+        <ul>
+        <li> The first panel shows the time-frequency spectrogram from L1 with the viterbi track overlayed </li>
+        <li> The second panel shows the time-frequency spectrogram from H1 with the viterbi track overlayed </li>
+        <li> The third panel shows the viterbi map from the combination of both detectors, this is related to the probability that a signal is present in any particular time-frequency bin </li>
+        <li> The fourth panel shows the normalised SFT power along the red Viterbi track </li>
+        <li> The fifth panel shows the mean noise floor across the frequency band as a function of time. </li>
+        <ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
+
+    </div>
+
+    </body>
+    </html>

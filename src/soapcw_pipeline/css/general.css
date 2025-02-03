@@ -1,36 +1,19 @@
-* {
-    box-sizing: border-box;
-  }
-/* Style the body */
-body {
-    font-family: Arial, Helvetica, sans-serif;
+body { 
+    display: flex; 
+    flex-direction: column;
+    padding: 0;
     margin: 0;
-  }
-  
-  /* Header/logo Title */
-  .header {
-    padding: 80px;
-    text-align: center;
-    background: #1abc9c;
-    color: white;
-  }
-  
-  /* Increase the font size of the heading */
-  .header h1 {
-    font-size: 40px;
-  }
-  
-  /* Sticky navbar - toggles between relative and fixed, depending on the scroll position. It is positioned relative until a given offset position is met in the viewport - then it "sticks" in place (like position:fixed). The sticky value is not supported in IE or Edge 15 and earlier versions. However, for these versions the navbar will inherit default position */
-  .navbar {
-    overflow: hidden;
+    font-family: Arial, sans-serif; 
+}
+
+/* Navigation Bar */
+.navbar {
     background-color: #333;
-    position: sticky;
-    position: -webkit-sticky;
-    top: 0;
-  }
-  
-  /* Style the navigation bar links */
-  .navbar a {
+    padding: 0px 0;
+    text-align: center;
+}
+
+.navbar a {
     float: left;
     display: block;
     color: white;
@@ -38,111 +21,193 @@ body {
     padding: 14px 20px;
     text-decoration: none;
   }
-  
-  
-  /* Right-aligned link */
-  .navbar a.right {
-    float: right;
-  }
-  
-  /* Change color on hover */
-  .navbar a:hover {
-    background-color: #ddd;
-    color: black;
-  }
-  
-  /* Active/current link */
-  .navbar a.active {
-    background-color: #666;
-    color: white;
-  }
-  
-  /* Column container */
-  .row {  
-    display: -ms-flexbox; /* IE10 */
+
+.navbar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
     display: flex;
-    -ms-flex-wrap: wrap; /* IE10 */
-    flex-wrap: wrap;
-  }
-  
-  /* Create two unequal columns that sits next to each other */
-  /* Sidebar/left column */
-  .side {
-    -ms-flex: 25%; /* IE10 */
-    flex: 25%;
-    background-color: #f1f1f1;
-    padding: 20px;
-    max-width: 25%;
-  }
+    justify-content: center;
+}
 
-  /* div boxes */
-  .box {
-    background-color: #f1f1f1;
-    border: 4px solid rgba(35, 48, 90, 0.606);
-    margin: 2px;
-    padding: 6px;
+.navbar ul li {
+    margin: 0 15px;
+}
+
+.navbar ul li a {
+    text-decoration: none;
+    color: white;
+    font-size: 16px;
+    display: inline-block;
+}
+
+.navbar ul li a:hover {
+    background-color: #555;
+    border-radius: 5px;
+}
+
+/* Right-aligned link */
+.navbar a.right {
+    float: right;
+}
+
+/* Change color on hover */
+.navbar a:hover {
+background-color: #ddd;
+color: black;
+}
+
+/* Active/current link */
+.navbar a.active {
+background-color: #666;
+color: white;
+}
+
+
+.btn {
+    background-color: rgba(35, 48, 90, 0.5);
+    padding: 5px 5px;
+    border-radius: 5px;
     text-align: center;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
 
-  }
-  
-  /* Main column */
-  .main {   
+.btn:hover {
+    background-color: rgba(35, 48, 90, 0.3);
+}
+
+.freqinputdiv{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px;
+}
+
+.inputfreq{
+    max-width: calc(40%)
+}
+
+/* Footer */
+.footer {
+padding: 20px;
+text-align: center;
+background: #ddd;
+}
+
+.container { 
+    display: flex; 
+    width: 100%; 
+}
+
+/* Table Section */
+.table-container { 
+    width: 33.3%; 
+    min-width: 300px; 
+}
+
+
+/* Table */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+
+th, td { 
+    border: 1px solid black; 
+    padding: 10px; 
+    text-align: left; 
+    cursor: pointer; 
+}
+
+tr:hover { 
+    background-color: #f0f0f0; 
+}
+
+/* Highlight selected row */
+.selected { 
+    background-color: lightblue !important; 
+}
+
+/* Controls */
+.controls { 
+    margin-bottom: 10px; 
+}
+
+/* Column container */
+.row {  
+display: flex;
+/*-ms-flex-wrap: wrap;*/  /* IE10 */
+flex-wrap: nowrap;
+}
+
+/* Create two unequal columns that sits next to each other */
+/* Sidebar/left column */
+.side {
+-ms-flex: 25%; /* IE10 */
+flex: 25%;
+background-color: #f1f1f1;
+padding: 20px;
+max-width: 25%;
+}
+
+/* div boxes */
+.box {
+background-color: #f1f1f1;
+border: 4px solid rgba(35, 48, 90, 0.606);
+margin: 2px;
+padding: 6px;
+text-align: center;
+
+}
+
+/* Main column */
+.main {   
     -ms-flex: 75%; /* IE10 */
     flex: 75%;
     background-color: white;
     padding: 20px;
-  }
-  
-  /* Fake image, just for this example */
-  .fakeimg {
-    background-color: #aaa;
-    width: 100%;
-    padding: 20px;
-  }
-  
-  /* Footer */
-  .footer {
-    padding: 20px;
-    text-align: center;
-    background: #ddd;
-  }
+    }
 
-  .imagewrap {
-    margin: auto;
-    display: inline-block;
-    align-items: center;
-    position: relative;
-  }
-
-/* rgba(6, 109, 6, 0.5) */
-  .btn-cl {
-    background-color: rgba(35, 48, 90, 0.606);
-  }
-
-  .sortable tr {
-    cursor: pointer;
+.side, .main {
+    box-sizing: border-box;
 }
-  
-  /* Responsive layout - when the screen is less than 700px wide, make the two columns stack on top of each other instead of next to each other */
-  @media screen and (max-width: 700px) {
-    .row {   
-      flex-direction: column;
-    }
-  }
-  
-  /* Responsive layout - when the screen is less than 400px wide, make the navigation links stack on top of each other instead of next to each other */
-  @media screen and (max-width: 400px) {
-    .navbar a {
-      float: none;
-      width: 100%;
-    }
-  }
 
-  table.dataTable tbody tr:hover td 
-  {
-    background-color:rgba(35, 48, 90, 0.606);
-  }
-  table.dataTable tbody tr.selected td 
-  {
-    background-color:rgba(35, 48, 90, 0.606);
-  }
+/* Ensure the image inside .side takes up 100% of the side div */
+.side img {
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove extra spacing below the image */
+    object-fit: contain;
+}
+
+/* Ensure the image inside .main takes up 50% of the total page width */
+.main .image-container img {
+    width: 50vw; /* 50% of the viewport width */
+    max-width:99%;
+    height: auto; /* Maintain aspect ratio */
+    display: block;
+    object-fit: contain;
+}
+
+.side {
+    overflow-x: hidden; /* Prevent the whole sidebar from scrolling */
+}
+
+.table-scroll {
+    overflow-x: auto; /* Enable horizontal scrolling */
+    max-width: 100%; /* Prevent it from overflowing the sidebar */
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+/* Center-align pagination buttons */
+.page-switch-container {
+    display: flex;
+    justify-content: center; /* Centers elements horizontally */
+    align-items: center; /* Centers elements vertically */
+    gap: 10px; /* Adds spacing between buttons and text */
+    text-align: center;
+}
