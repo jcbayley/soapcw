@@ -28,6 +28,17 @@ class LoadData(torch.utils.data.Dataset):
     def __len__(self,):
         return min(len(self.noise_filenames), len(self.signal_filenames))
 
+    def get_image_size(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+        with h5py.File(self.noise_filenames[0], "r") as f:
+            img = f["H_imgs"]
+            img_shape = np.shape(img)
+        return img_shape
+
     def __getitem__(self, idx):
         """_summary_
 
@@ -214,34 +225,31 @@ def train_model(
     Raises:
         Exception: _description_
     """
-    other_bandtype = "odd" if bandtype == "even" else "even"
-    train_noise_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin}_{fmax}", "snr_0.0_0.0")
-    train_signal_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin}_{fmax}", f"snr_{float(snrmin)}_{float(snrmax)}")
 
-    val_noise_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin}_{fmax}", "snr_0.0_0.0")
-    val_signal_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin}_{fmax}", f"snr_{float(snrmin)}_{float(snrmax)}")
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
+        
+    other_bandtype = "odd" if bandtype == "even" else "even"
+    train_noise_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
+    train_signal_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
+
+    val_noise_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
+    val_signal_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
 
     if model_type == "spectrogram":
         load_types = ["H_imgs", "L_imgs"]
         #inchannels = 2
-        model = models.CNN(input_dim=img_dim, fc_layers=fc_layers, conv_layers=conv_layers, inchannels=in_channels, avg_pool_size=avg_pool_size, device=device).to(device)
     elif model_type == "vitmap":
         load_types = ["vit_imgs"]
         #inchannels = 1
-        model = models.CNN(input_dim=img_dim, fc_layers=fc_layers, conv_layers=conv_layers, inchannels=in_channels, avg_pool_size=avg_pool_size, device=device).to(device)
     elif model_type == "vitmapspectrogram":
         load_types = ["vit_imgs", "H_imgs", "L_imgs"]
         #inchannels = 3
-        model = models.CNN(input_dim=img_dim, fc_layers=fc_layers, conv_layers=conv_layers, inchannels=in_channels, avg_pool_size=avg_pool_size, device=device).to(device)
     elif model_type == "vitmapspectrogramstat":
         load_types = ["vit_imgs", "H_imgs", "L_imgs", "stat"]
     else:
         raise Exception(f"Load type {model_type} not defined select from [spectrogram, vitmap, vit_imgs, vitmapspectrogram, vitmapspectstatgram]")
 
-    print("model")
-    print(torchsummary.summary(model, (in_channels, img_dim[0], img_dim[1])))
-
-    print("model loaded")
 
     train_dataset = LoadData(train_noise_dir, train_signal_dir, load_types=load_types)
     validation_dataset = LoadData(val_noise_dir, val_signal_dir, load_types=load_types, nfile_load=2)
@@ -251,6 +259,27 @@ def train_model(
     print("datashape: ", [np.shape(trd0[0][i]) for i in range(len(trd0[0]))])
     print(train_noise_dir)
     print("data loaded")
+
+    img_dim = np.array(train_dataset.get_image_size()[1:])[::-1]
+
+    if model_type == "spectrogram":
+        #inchannels = 2
+        model = models.CNN(input_dim=img_dim, fc_layers=fc_layers, conv_layers=conv_layers, inchannels=in_channels, avg_pool_size=avg_pool_size, device=device).to(device)
+    elif model_type == "vitmap":
+        #inchannels = 1
+        model = models.CNN(input_dim=img_dim, fc_layers=fc_layers, conv_layers=conv_layers, inchannels=in_channels, avg_pool_size=avg_pool_size, device=device).to(device)
+    elif model_type == "vitmapspectrogram":
+        inchannels = 3
+        model = models.CNN(input_dim=img_dim, fc_layers=fc_layers, conv_layers=conv_layers, inchannels=in_channels, avg_pool_size=avg_pool_size, device=device).to(device)
+    elif model_type == "vitmapspectrogramstat":
+        load_types = ["vit_imgs", "H_imgs", "L_imgs", "stat"]
+    else:
+        raise Exception(f"Load type {model_type} not defined select from [spectrogram, vitmap, vit_imgs, vitmapspectrogram, vitmapspectstatgram]")
+
+    print("model")
+    #print(torchsummary.summary(model, (in_channels, img_dim[0], img_dim[1])))
+
+    print("model loaded")
 
     optimiser = torch.optim.Adam(model.parameters(), lr = learning_rate)
     loss_fn = torch.nn.BCEWithLogitsLoss()
@@ -307,7 +336,12 @@ def train_model(
             torch.save({
                 "model_state_dict": model.state_dict(),
                 "optimiser_state_dict": optimiser.state_dict(),
-            }, os.path.join(save_dir, f"model_{model_type}_for_{other_bandtype}.pt"))
+                "input_dim":img_dim,
+                "fc_layers":fc_layers, 
+                "conv_layers":conv_layers, 
+                "inchannels":in_channels, 
+                "avg_pool_size":avg_pool_size,
+            }, os.path.join(save_dir, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt"))
 
 
             fig, ax = plt.subplots()
@@ -315,7 +349,7 @@ def train_model(
             ax.set_xlabel("iteration")
             ax.set_ylabel("Loss")
             ax.legend()
-            fig.savefig(os.path.join(save_dir, f"losses_for_{other_bandtype}.png"))
+            fig.savefig(os.path.join(save_dir, f"losses_for_{model_type}_{other_bandtype}_F{fmin}_{fmax}.png"))
 
 
 
@@ -336,21 +370,21 @@ def main():
     if args.config_file is not None:
         cfg = SOAPConfig(args.config_file)
 
-    for bandtype in cfg["model"]["band_types"]:
-        train_model(cfg["model"]["model_type"], 
-                    cfg["model"]["save_dir"], 
-                    cfg["general"]["save_dir"], 
-                    cfg["model"]["learning_rate"], 
-                    cfg["model"]["img_dim"],
-                    cfg["model"]["n_channels"],
-                    cfg["model"]["conv_layers"], 
-                    cfg["model"]["fc_layers"],
-                    avg_pool_size=cfg["model"]["avg_pool_size"],
+    for bandtype in cfg["cnn_model"]["band_types"]:
+        train_model(cfg["cnn_model"]["model_type"], 
+                    cfg["output"]["cnn_model_directory"], 
+                    cfg["output"]["cnn_train_data_save_dir"], 
+                    cfg["cnn_model"]["learning_rate"], 
+                    cfg["cnn_model"]["img_dim"],
+                    cfg["cnn_model"]["n_channels"],
+                    cfg["cnn_model"]["conv_layers"], 
+                    cfg["cnn_model"]["fc_layers"],
+                    avg_pool_size=cfg["cnn_model"]["avg_pool_size"],
                     bandtype = bandtype,
-                    n_epochs = cfg["model"]["n_epochs"],
+                    n_epochs = cfg["cnn_model"]["n_epochs"],
                     device=device,
-                    save_interval=cfg["model"]["save_interval"],
-                    n_train_multi_size=cfg["model"]["n_train_multi_size"])
+                    save_interval=cfg["cnn_model"]["save_interval"],
+                    n_train_multi_size=cfg["cnn_model"]["n_train_multi_size"])
 
 
 if __name__ == "__main__":

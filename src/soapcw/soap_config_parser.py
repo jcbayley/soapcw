@@ -3,8 +3,58 @@ import json
 import regex
 import os
 import importlib_resources
+import importlib.resources as pkg_resources
+import logging
+from typing import Any
+import ast
 
-class SOAPConfig():
+logger = logging.getLogger(__name__)
+
+
+class SOAPConfigParser(configparser.ConfigParser):
+    """Config parser for bayesbeat"""
+
+    default_config = pkg_resources.files("soapcw") / "default.ini"
+
+    def __init__(self, *args, scheduler=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        logger.debug(f"Loading default config from: {self.default_config}")
+        self.read(self.default_config)
+
+    def get(self, section, option, **kwargs):
+        return try_literal_eval(super().get(section, option, **kwargs))
+
+    def write_to_file(self, filename: str) -> None:
+        """Write the config to a file"""
+        with open(filename, "w") as f:
+            self.write(f)
+
+class SOAPConfig(SOAPConfigParser):
+
+    def __init__(self, config_file, **kwargs):
+        super().__init__(self, **kwargs)
+        logger.info(f"Loading config from: {config_file}")
+        self.read(config_file)
+        self.config_file = os.path.abspath(config_file)
+
+
+
+def try_literal_eval(value: Any, /) -> Any:
+    """Try to call literal eval return value if an error is raised"""
+    try:
+        return ast.literal_eval(value)
+    except (ValueError, SyntaxError):
+        return value
+
+def read_config(config_file: str, **kwargs) -> SOAPConfigParser:
+    """Read a config file"""
+    config = SOAPConfigParser(**kwargs)
+    logger.info(f"Loading config from: {config_file}")
+    config.read(config_file)
+    return config
+
+
+class SOAPConfigOld():
 
     def __init__(self, config_file):
         cfg = configparser.ConfigParser()
@@ -16,7 +66,7 @@ class SOAPConfig():
         self.config_file = os.path.abspath(config_file)
         self.float_list = ["band_starts","band_ends","band_widths"]
         self.int_list = ["strides","fc_layers","img_dim", "avg_pool_size"]
-        self.string_list = ["load_directory","save_options","type","band_types","sft_dirs"]
+        self.string_list = ["load_directory","save_options","type","band_types","sft_dirs","detectors"]
         self.tuple_list = ["conv_layers"]
         self.floats = ["band_load_size", "snr_width_line", "snr_width_signal", 
                         "prob_line", "left_right_prob", "det1_prob", "det2_prob",
@@ -45,7 +95,7 @@ class SOAPConfig():
         elif partype == "int":
             val = [int(v) for v in val]
         elif partype == "string":
-            val = [v.replace('"','').replace(' ','') for v in val]
+            val = [v.replace('"','').replace(' ','').strip() for v in val]
         else:
             raise Exception(f"Type {partype} not supported")
 

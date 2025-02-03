@@ -8,7 +8,7 @@ import os
 import pickle
 import time
 import datetime
-import soapcw as soap
+import soapcw as soapcw
 from soapcw import cw
 import argparse
 from skimage.transform import resize
@@ -46,16 +46,19 @@ def find_sft_file(indir,bandmin,bandmax):
     hname = None
     lname = None
 
+    print("F{:0>4}Hz".format(int(bandmin)))
     # loops over files to find one with matching string
     for fname in os.listdir(hindir):
         #print("F{:0>4}Hz".format(int(bandmin)), fname)
         if "F{:0>4}Hz".format(int(bandmin)) in fname:
             hname = fname
+            break
 
     for fname in os.listdir(lindir):
         #if "F{}_{}.sft".format(bandmin,bandmax) in fname:
         if "F{:0>4}Hz".format(int(bandmin)) in fname:
             lname = fname
+            break
 
     if hname is None or lname is None:
         print("NO SFT FOUND {}, {}, {}, F{:0>4}Hz".format(indir, bandmin, bandmax, int(bandmin)))
@@ -63,7 +66,13 @@ def find_sft_file(indir,bandmin,bandmax):
     return os.path.join(hindir,hname),os.path.join(lindir,lname)
 
 
-def return_outputs(datah,datal,fmin,fmax,snr,out_snr="./",h0=None,depth=None,size=(156,89),resize_image=True,test_plot=False,pars=None,test=False,epochs=None,minmaxpaths=None,inj_track=None, save_options = ["vit_imgs","H_imgs","L_imgs","stats","sum_stats","pars","diffs","paths","powers","plots"], lookup_dir = "/home/joseph.bayley/data/soap/lookup_tables/line_aware_optimised/", degfree = 96, brange = "", totshape = None):
+def return_outputs(
+    config,
+    datah,datal,fmin,fmax,snr,out_snr="./",h0=None,depth=None,
+    size=(156,89),resize_image=None,test_plot=False,pars=None,test=False,
+    epochs=None,minmaxpaths=None,inj_track=None, totshape=None,
+    save_options = ["vit_imgs","H_imgs","L_imgs","stats","sum_stats","pars","diffs","paths","powers","plots"], 
+    degfree = 96):
     """
     save the outputs of the SOAP search and the spectrograms of the data
     
@@ -86,21 +95,40 @@ def return_outputs(datah,datal,fmin,fmax,snr,out_snr="./",h0=None,depth=None,siz
     #lookup_2 = str(lookup_dir) + "/log_signoiseline_2det_{}degfree_4.0_5.0_0.0387.pkl".format(degfree,4.0,5.0,0.0387)
 
     #print("SOAP pars:",fmin,degfree, np.mean(datah), np.mean(datal))
-    lookup_1 = str(lookup_dir) + "/log_signoiseline_1det_{}degfree_{}_{}_{}.pkl".format(degfree,4.0,10.0,0.4)
-    lookup_2 = str(lookup_dir) + "/log_signoiseline_2det_{}degfree_{}_{}_{}.pkl".format(degfree,4.0,10.0,0.4)
-
-    # Gaussian lookup parmaeters
-    #lookup_1 = str(lookup_dir) + "/signoiseline_1det_{}_{}_{}.txt".format(2.1,1.0,0.0)
-    #lookup_2 = str(lookup_dir) + "/signoiseline_2det_{}_{}_{}.txt".format(2.1,1.0,0.0)
-
-    # set the transition matrix as likely to be in the same bin in each detector and slightyl more probable to go straight (mostly so it goest straight through gaps)
-    #tr = soap.tools.transition_matrix_2d_5(1.0000001,1.000001,1e400,1e400,log=True)
-    tr = soap.tools.transition_matrix_2d(1.00000001,1e400,1e400)
-
+    #lookup_1 = str(lookup_dir) + "/log_signoiseline_1det_{}degfree_{}_{}_{}.pkl".format(degfree,4.0,10.0,0.4)
+    #lookup_2 = str(lookup_dir) + "/log_signoiseline_2det_{}degfree_{}_{}_{}.pkl".format(degfree,4.0,10.0,0.4)
+    save_options = config["cnn_data"]["save_options"]
 
     if "stats" in save_options:
-        # run two detector search using the line aware statistic
-        viterbi = soap.two_detector(tr,datah,datal,lookup_table_2det=lookup_2,lookup_table_1det=lookup_1)
+        if config["lookuptable"]["lookup_type"] == "amplitude":
+            amp="amp"
+        else:
+            amp=""
+        lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
+        lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
+
+        # define the transition matrix for soap
+
+        if config["transitionmatrix"]["extra_left_right"] in [False, 0, "false"]:
+            tr = soapcw.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
+                                                config["transitionmatrix"]["det1_prob"],
+                                                config["transitionmatrix"]["det2_prob"],
+                                                log=True)
+        else:
+            tr = soapcw.tools.transition_matrix_2d_5jump(config["transitionmatrix"]["left_right_prob"],
+                                                    config["transitionmatrix"]["extra_left_right"]*config["transitionmatrix"]["left_right_prob"],
+                                                    config["transitionmatrix"]["det1_prob"],
+                                                    config["transitionmatrix"]["det2_prob"],
+                                                    log=True)
+
+
+        # run soap search using the two detector line aware statistic (one detector in gaps)
+
+        if config["lookuptable"]["lookup_type"] == "power":
+            viterbi = soapcw.two_detector(tr,datah,datal,lookup_table_2det=lookup_2,lookup_table_1det=lookup_1)
+        else:
+            raise Exception("Only power lookups currently supported")
+        
 
     roll_track_sub = viterbi.vit_track - np.roll(viterbi.vit_track, 1)
     if np.any(np.abs(roll_track_sub[3:-3]) > 3):
@@ -111,7 +139,7 @@ def return_outputs(datah,datal,fmin,fmax,snr,out_snr="./",h0=None,depth=None,siz
 
     # summed stat
     if "sum_stats" in save_options:
-        sum_viterbi = soap.two_detector(tr,datah,datal)
+        sum_viterbi = soapcw.two_detector(tr,datah,datal)
     
     if inj_track is not None and "diffs" in save_options:
         diffs = np.array(viterbi.vit_track1) - np.array(inj_track)[:len(viterbi.vit_track1)]
@@ -121,7 +149,7 @@ def return_outputs(datah,datal,fmin,fmax,snr,out_snr="./",h0=None,depth=None,siz
 
     # get the normalised SFT power along the optimum track
     if "powers" in save_options:
-        powers = soap.tools.track_power(viterbi.vit_track1,datah),soap.tools.track_power(viterbi.vit_track2,datal)
+        powers = soapcw.tools.track_power(viterbi.vit_track1,datah),soapcw.tools.track_power(viterbi.vit_track2,datal)
 
     #create the figure showing SFTs and tracks
     if "plots" in save_options:
@@ -134,11 +162,15 @@ def return_outputs(datah,datal,fmin,fmax,snr,out_snr="./",h0=None,depth=None,siz
             os.makedirs(j)
     """
     # if a size is not set then set the size of output image to 1/3 length in time and 1/2 in frequency
-    if size is None:
+    if config["cnn_data"]["resize_image"] == "default":
         size = (vit_data.shape[0] / 3, vit_data.shape[1] / 2)
+    else:
+        size = config["cnn_data"]["resize_image"]
+
         
     # resize the normalised SFTs and the viterbi maps using skimages resize function which interpolates (also option for maxpooling)
-    if resize_image:
+    if config["cnn_data"]["resize_image"] not in [None, "none", False, "false"]:
+        print(config["cnn_data"]["resize_image"])
             
         # viterbi map resize
         vit_resize      = resize(vit_data, size, anti_aliasing=True)
@@ -338,14 +370,14 @@ def main():
 
 
         if args.data_type == "test":
-            save_dir = os.path.join(config["general"]["save_dir"], "test")
+            save_dir = os.path.join(config["output"]["cnn_train_data_save_dir"], "test")
             if args.run_type != "gaussian":
                 generate_test_data.loop_band_test_data(args.load_dir,save_dir,args.band_min,args.band_max,args.band_width,args.resize_image, num_repeat = args.nperband)
             elif args.run_type == "gaussian":
-                gaussian_train.loop_band_train_augment(loadpath=args.load_dir,path=save_dir,bandmin=args.band_min,bandmax=args.band_max, band_width=args.band_width,resize_image=args.resize_image, nonoise=args.no_noise,snr_min=args.snr_min,snr_max=args.snr_max,nperband=1,test=True,save_options=args.save_options.split(" "))
+                gaussian_train.loop_band_train_augment(loadpath=args.load_dir,path=save_dir,bandmin=args.band_min,bandmax=args.band_max, band_width=args.band_width,resize_image=args.resize_image, nonoise=args.no_noise,nperband=1,test=True,save_options=args.save_options.split(" "))
 
         elif args.data_type in ["train", "validation"]:
-            save_dir = os.path.join(config["general"]["save_dir"], args.data_type)
+            save_dir = os.path.join(config["output"]["cnn_train_data_save_dir"], args.data_type)
 
             print("runtype", args.run_type)
             if args.run_type == "gaussian" or args.run_type == "gauss":
@@ -356,11 +388,9 @@ def main():
                     bandmax=args.band_max, 
                     band_width=args.band_width, 
                     nonoise=args.no_noise,
-                    snr_min=config["data"]["snrmin"],
-                    snr_max=config["data"]["snrmax"],
                     nperband=args.nperband,
                     test=False,
-                    save_options=config["data"]["save_options"]
+                    save_options=config["cnn_data"]["save_options"]
                     )
             else:
                 generate_train_data.loop_band_train_augment(
@@ -369,11 +399,9 @@ def main():
                     args.band_min,
                     args.band_max,
                     args.band_width,
-                    config["data"]["resize_image"], 
-                    gen_noise_only=config["data"]["gen_noise_only"],
-                    snr_min=config["data"]["snrmin"],
-                    snr_max=config["data"]["snrmax"],
-                    save_options=config["data"]["save_options"]
+                    config["cnn_data"]["resize_image"], 
+                    gen_noise_only=config["cnn_data"]["gen_noise_only"],
+                    save_options=config["cnn_data"]["save_options"]
                     )
 
         """

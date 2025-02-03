@@ -92,8 +92,6 @@ def loop_band_train_augment(
     band_width,
     resize_image=True,
     gen_noise_only=False,
-    snr_min = 50,
-    snr_max=150, 
     save_options = None):
     """Loop over the data in load directory and augment to create training data
 
@@ -119,7 +117,7 @@ def loop_band_train_augment(
             width = config["data"]["band_widths"][i]
             nbin = 180#int(width*tsft)
             plotcut = stride * nbin
-            brange = f"band_{int(minband)}_{int(maxband)}"
+            brange = f"band_{int(minband):.1f}_{int(maxband):.1f}"
             break
         else:
             continue
@@ -136,12 +134,12 @@ def loop_band_train_augment(
 
     bl,be = bandmin,bandmax
 
-    if config["data"]["tstart"] is not None:
-        tmin = config["data"]["tstart"]
+    if config["data"]["start_time"] is not None:
+        tmin = config["data"]["start_time"]
     else:
         tmin = None
-    if config["data"]["tend"] is not None:
-        tmax = config["data"]["tend"]
+    if config["data"]["end_time"] is not None:
+        tmax = config["data"]["end_time"]
     else:
         tmax = None
 
@@ -151,21 +149,26 @@ def loop_band_train_augment(
     vetolist = list(np.arange(bandmin,bandmax))
 
     # find the appropriate sft files
-    hname,lname = cnn_data_gen.find_sft_file(config["general"]["narrowband_sft_dir"],bandmin,bandmax)
+    hname,lname = cnn_data_gen.find_sft_file(config["narrowband"]["narrowband_sft_dir"],bandmin,bandmax)
     
     # load in the narrowbanded sfts, normalise them, fill in the gaps and save the running median
+    print(f"Loading SFTs ... {hname} {lname}")
     sfts = cw.LoadSFT("{};{}".format(hname,lname),norm=True,filled=True,vetolist = vetolist,save_rngmed=True, tmin=tmin,tmax=tmax)
 
-    print("SFTs Loaded ...")
+    print("SFTs Loaded")
+
+    if config["lookuptable"]["lookup_type"] == "amplitude":
+        amp="amp"
+    else:
+        amp=""
 
     # make appropriate directoes
     if not os.path.isdir(path):
         os.makedirs(path)
     erange = 15
 
-    snrrange = [snr_min,snr_max]
     noise_out_snr = "snr_0.0_0.0"
-    signal_out_snr = "snr_{}_{}".format(snr_min, snr_max)
+    signal_out_snr = f'snr_{config["cnn_data"]["snrmin"]:.1f}_{config["cnn_data"]["snrmax"]:.1f}'
 
     even_noise_filenames = {}
     even_signal_filenames = {}
@@ -237,7 +240,13 @@ def loop_band_train_augment(
             datal = copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte])
             
             # run injections function with new data, this saves noise iamge and injects signal and saves signal images
-            noise_outs1, signal_outs1 = run_and_inj(datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,gen_noise_only=gen_noise_only,snrrange=snrrange, save_options=  save_options, stride = stride, degfree = degfree, brange = brange, sfts=sfts)
+            noise_outs1, signal_outs1 = run_and_inj(
+                config,
+                datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,
+                gen_noise_only=gen_noise_only,
+                save_options=  save_options, stride = stride, 
+                degfree = degfree, brange = brange, sfts=sfts,
+                )
             
             del datah, datal
             
@@ -246,7 +255,13 @@ def loop_band_train_augment(
             datah,shH = flip_data_time(copy.deepcopy(sfts.H1.norm_sft_power[:,cts:cte]),sh=av_sh[0])
             datal,shL = flip_data_time(copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte]),sh=av_sh[1])
             
-            noise_outs2, signal_outs2 = run_and_inj(datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],gen_noise_only=gen_noise_only,snrrange=snrrange, save_options=save_options, stride = stride, degfree = degfree, brange = brange,sfts=sfts)
+            noise_outs2, signal_outs2 = run_and_inj(
+                config,
+                datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
+                gen_noise_only=gen_noise_only,
+                save_options=save_options, stride = stride, 
+                degfree = degfree, brange = brange,sfts=sfts,
+                )
         
             del datah,datal
         
@@ -255,7 +270,13 @@ def loop_band_train_augment(
             datah = flip_data_freq(copy.deepcopy(sfts.H1.norm_sft_power[:,cts:cte]))
             datal = flip_data_freq(copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte]))
         
-            noise_outs3, signal_outs3 = run_and_inj(datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,gen_noise_only=gen_noise_only,snrrange=snrrange, save_options=save_options, stride = stride, degfree = degfree, brange = brange,sfts=sfts)
+            noise_outs3, signal_outs3 = run_and_inj(
+                config,
+                datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,
+                gen_noise_only=gen_noise_only,
+                save_options=save_options, stride = stride, 
+                degfree = degfree, brange = brange,sfts=sfts,
+                )
             
             del datah,datal
             
@@ -264,7 +285,13 @@ def loop_band_train_augment(
             datah,shH = roll_in_time(copy.deepcopy(sfts.H1.norm_sft_power[:,cts:cte]),numbins=100,sh=av_sh[0])
             datal,shL = roll_in_time(copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte]),numbins=100,sh=av_sh[1])
         
-            noise_outs4, signal_outs4 = run_and_inj(datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],gen_noise_only=gen_noise_only,snrrange=snrrange, save_options=save_options, stride = stride, degfree = degfree, brange = brange,sfts=sfts)
+            noise_outs4, signal_outs4 = run_and_inj(
+                config,
+                datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
+                gen_noise_only=gen_noise_only,
+                save_options=save_options, stride = stride, 
+                degfree = degfree, brange = brange,sfts=sfts,
+                )
             
             del datah,datal
 
@@ -280,10 +307,10 @@ def loop_band_train_augment(
     print("saving data to file .......")
 
 
-    even_noise_filenames = os.path.join(*[path,"even",brange,noise_out_snr,f"freq_{bandmin}_{bandmax}_{len(shifts)*len(range_bands)}.hdf5"])
-    even_signal_filenames = os.path.join(*[path,"even",brange,signal_out_snr,f"freq_{bandmin}_{bandmax}_{len(shifts)*len(range_bands)}.hdf5"])
-    odd_noise_filenames = os.path.join(*[path,"odd",brange,noise_out_snr,f"freq_{bandmin}_{bandmax}_{len(shifts)*len(range_bands)}.hdf5"])
-    odd_signal_filenames = os.path.join(*[path,"odd",brange,signal_out_snr,f"freq_{bandmin}_{bandmax}_{len(shifts)*len(range_bands)}.hdf5"])
+    even_noise_filenames = os.path.join(*[path,"even",brange,noise_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
+    even_signal_filenames = os.path.join(*[path,"even",brange,signal_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
+    odd_noise_filenames = os.path.join(*[path,"odd",brange,noise_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
+    odd_signal_filenames = os.path.join(*[path,"odd",brange,signal_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
 
     for fname, temp_data in zip([even_noise_filenames, even_signal_filenames, odd_noise_filenames, odd_signal_filenames], [even_noise_save_outs, even_signal_save_outs, odd_noise_save_outs, odd_signal_save_outs]):
         if not os.path.isdir(os.path.dirname(fname)):
@@ -345,7 +372,7 @@ def loop_band_train_augment(
 
 
 
-def run_and_inj(datah,datal,fmin,width,resize_image=False,snrrange = (50,150),av_sh=None,gen_noise_only=False, save_options = None, stride = 1,degfree = 96, brange = "", sfts = None):
+def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen_noise_only=False, save_options = None, stride = 1,degfree = 96, brange = "", sfts = None):
     """_summary_
 
     Args:
@@ -387,19 +414,31 @@ def run_and_inj(datah,datal,fmin,width,resize_image=False,snrrange = (50,150),av
         sig.phi0 = 0
         sig.psi = 0
         sig.f = [0,0]
-        sig.earth_ephem = "/home/joseph.bayley/repositories/lalsuite/lalpulsar/lib/earth00-40-DE430.dat.gz"
-        sig.sun_ephem = "/home/joseph.bayley/repositories/lalsuite/lalpulsar/lib/sun00-40-DE430.dat.gz"
+        sig.earth_ephem = config["cnn_data"]["earth_ephemeredis"]
+        sig.sun_ephem = config["cnn_data"]["sun_ephemeredis"]
         sig.snr = 0
         sig.fmin = fmin
         sig.fmax = fmax
         sig.tref = tstart
         
         Sn = {"H1":av_sh[0],"L1":av_sh[1]}
-        data = sig.get_spectrogram(tstart = tstart, nsft = nsft,tref=tstart,tsft=tsft,fmin=fmin,fmax=fmax,snr=0,dets= ["H1","L1"],Sn=Sn)
+        data = sig.get_spectrogram(
+            tstart = tstart, nsft = nsft,tref=tstart,tsft=tsft,fmin=fmin,fmax=fmax,snr=0,dets= ["H1","L1"],Sn=Sn
+            )
         data.sum_sfts()
         data.downsamp_frequency(stride=stride,data_type="summed_norm_sft_power",remove_original=False)
 
-        noise_outputs = cnn_data_gen.return_outputs(out_snr=out_snr_noise,datah=data.H1.downsamp_summed_norm_sft_power,datal=data.L1.downsamp_summed_norm_sft_power, fmin=fmin,fmax=fmax,snr=0,depth=0,h0=0, resize_image=resize_image, save_options = save_options, epochs = data.H1.summed_epochs, degfree = degfree, brange = brange)
+        noise_outputs = cnn_data_gen.return_outputs(
+            config,
+            out_snr=out_snr_noise,
+            datah=data.H1.downsamp_summed_norm_sft_power,
+            datal=data.L1.downsamp_summed_norm_sft_power, 
+            fmin=fmin,fmax=fmax,snr=0,depth=0,h0=0, 
+            resize_image=resize_image, 
+            save_options = save_options, 
+            epochs = data.H1.summed_epochs, 
+            degfree = degfree
+            )
         noise_outputs["pars"] = {"snr":0}
         noise_outputs["pars"]["tref"] = tstart
         noise_outputs["pars"]["snr"] = 0
@@ -413,22 +452,44 @@ def run_and_inj(datah,datal,fmin,width,resize_image=False,snrrange = (50,150),av
 
     sig = cw.GenerateSignal()
     
-    snrstart,snrend = snrrange[0],snrrange[1]
-            
-    sigfreq = np.random.uniform(0,1)*(width)*0.5 + flow + (width)*0.25
-        
+    snrstart,snrend = config["cnn_data"]["snrmin"], config["cnn_data"]["snrmax"]
+                    
     snr = int(np.random.rand(1)*(snrend-snrstart) + snrstart)
         
     # places f0 in and around the frequency band and within the defined ranges for other parmaeters
-    params_low =  [fmin + 0.025,      -1e-9 ,0      ,-1, 0      ,0      ,-1.0]
-    params_high = [fmin + width-0.025, -1e-16,  2*np.pi, 1,2*np.pi,np.pi/2,1.0]
+    #params_low =  [fmin + 0.025,      -1e-9 ,0      ,-1, 0      ,0      ,-1.0]
+    #params_high = [fmin + width-0.025, -1e-16,  2*np.pi, 1,2*np.pi,np.pi/2,1.0]
+    """
+    params_low =  [
+        fmin + 0.025,      
+        config["cnn_data"]["fdot_range"][0],
+        config["cnn_data"]["alpha_range"][0],
+        config["cnn_data"]["sindelta_range"][0], 
+        config["cnn_data"]["phi0_range"][0],
+        config["cnn_data"]["psi_range"][0],
+        config["cnn_data"]["cosi_range"][0]]
+    params_high = [
+        fmin + width-0.025, 
+        config["cnn_data"]["fdot_range"][1],
+        config["cnn_data"]["alpha_range"][1],
+        config["cnn_data"]["sindelta_range"][1], 
+        config["cnn_data"]["phi0_range"][1],
+        config["cnn_data"]["psi_range"][1],
+        config["cnn_data"]["cosi_range"][1]]
+    
+    """
     data_list_signal = []
     data_list_noise = []
     nsft = int(nsft)
     param_list = ["f","fd","alpha","sindelta","phi0","psi","cosi"]
     pars = {}
-    for j in np.linspace(0,len(param_list)-1,len(param_list)).astype(int):
-        pars[param_list[j]] = params_low[j] + np.random.uniform(0,1)*(params_high[j] - params_low[j])
+    for key in param_list:
+        if key == "f":
+            pars[key] = np.random.uniform(fmin + 0.025, fmin + width - 0.025)
+        else:
+            pars[key] = np.random.uniform(config["cnn_data"][f"{key}_range"][0], config["cnn_data"][f"{key}_range"][1])
+    #for j in np.linspace(0,len(param_list)-1,len(param_list)).astype(int):
+    #    pars[param_list[j]] = params_low[j] + np.random.uniform(0,1)*(params_high[j] - params_low[j])
 
     #pars["fd"] = np.random.uniform(-1,1)*10**pars["fd"]
     #sunephem,earthephem = "/home/joseph.bayley/.virtualenvs/soap/share/lalpulsar/earth00-19-DE200.dat.gz","/home/joseph.bayley/.virtualenvs/soap/share/lalpulsar/sun00-19-DE200.dat.gz"
@@ -439,15 +500,13 @@ def run_and_inj(datah,datal,fmin,width,resize_image=False,snrrange = (50,150),av
     sig.phi0 = pars["phi0"]
     sig.psi = pars["psi"]
     sig.f = [pars["f"],pars["fd"]]
-    sig.earth_ephem = "/home/joseph.bayley/repositories/lalsuite/lalpulsar/lib/earth00-40-DE430.dat.gz"
-    sig.sun_ephem = "/home/joseph.bayley/repositories/lalsuite/lalpulsar/lib/sun00-40-DE430.dat.gz"
+    sig.earth_ephem = config["cnn_data"]["earth_ephemeredis"]
+    sig.sun_ephem = config["cnn_data"]["sun_ephemeredis"]
     sig.snr = snr
     sig.fmin = fmin
     sig.fmax = fmax
     sig.tref = tstart
 
-    #print("MEANS",flow,fhigh)
-    #print(np.mean(datah,axis=1),np.mean(datal,axis=1))
             
     data = sig.get_spectrogram(tstart = tstart, nsft = len(datah),tref=tstart,tsft=tsft,fmin=flow,fmax=fhigh,snr=snr,noise_spect={"H1":datah,"L1":datal})
     data.sum_sfts()
@@ -468,6 +527,21 @@ def run_and_inj(datah,datal,fmin,width,resize_image=False,snrrange = (50,150),av
     pars["fmax"] = fmax
 
     out_snr_inj = "snr_{}_{}".format(snrstart,snrend)
-    signal_outs = cnn_data_gen.return_outputs(out_snr=out_snr_inj,datah=data.H1.downsamp_summed_norm_sft_power,datal=data.L1.downsamp_summed_norm_sft_power, fmin=fmin,fmax=fmax,snr=snr, depth=data.depth,h0=h0,resize_image=resize_image,pars=pars,inj_track=inj_track,epochs=epochs, save_options=save_options, degfree = degfree, brange = brange)
+    signal_outs = cnn_data_gen.return_outputs(
+        config, 
+        out_snr=out_snr_inj,
+        datah=data.H1.downsamp_summed_norm_sft_power,
+        datal=data.L1.downsamp_summed_norm_sft_power, 
+        fmin=fmin,
+        fmax=fmax,
+        snr=snr,
+        depth=data.depth,
+        h0=h0,
+        resize_image=resize_image,
+        pars=pars,
+        inj_track=inj_track,
+        epochs=epochs, 
+        save_options=save_options, 
+        degfree = degfree)
 
     return noise_outputs, signal_outs

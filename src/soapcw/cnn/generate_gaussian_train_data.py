@@ -59,7 +59,7 @@ def loop_band_train_augment(config, path,bandmin,bandmax,band_width,loadpath=Non
     else:
         noise_est = 1,1 
         nsft = config["data"]["nsfts"]
-        tstart = config["data"]["tstart"]
+        tstart = config["data"]["start_time"]
 
     # make appropriate directoes
     if not os.path.isdir(path):

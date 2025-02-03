@@ -98,6 +98,7 @@ soapcw-make-html-pages = "soapcw_pipeline.make_html_page:main"
 soapcw-cnn-make-data-dag = "soapcw.cnn.cnn_data_dag_gen:main"
 soapcw-cnn-make-data = "soapcw.cnn.cnn_data_gen:main"
 soapcw-cnn-train-model = "soapcw.cnn.train_model:main"
+soapcw-narrowband-sfts = "soapcw.cnn.narrowband_sfts:main"
 
 
 

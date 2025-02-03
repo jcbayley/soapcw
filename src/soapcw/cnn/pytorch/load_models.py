@@ -4,7 +4,7 @@ import numpy as np
 import configparser
 import soapcw
 
-def load_model_from_config(config, weights, device="cpu"):
+def load_model_from_config(weights_file, config=None, device="cpu"):
     """
     Load in model weights from config and weights
     args
@@ -21,17 +21,17 @@ def load_model_from_config(config, weights, device="cpu"):
     config: SoapConfigParser
         returns the parsed config file for the model
     """
-    config = soapcw.soap_config_parser.SOAPConfig(config)
+    if config is not None:
+        config = soapcw.soap_config_parser.SOAPConfig(config)
 
-    pre_model_weights = torch.load(weights, map_location=device)
-
+    pre_model_weights = torch.load(weights_file, map_location=device)
 
     model_soap = soapcw.cnn.pytorch.models.CNN(
-        input_dim=config["model"]["img_dim"],               # the size of the input image
-        fc_layers=config["model"]["fc_layers"],               # the size of the fully connected mlp layers 
-        conv_layers=config["model"]["conv_layers"],           # the convolutional layers (num_filters, filter_size, maxpool_size, stride)
-        inchannels=config["model"]["n_channels"], 
-        avg_pool_size=config["model"]["avg_pool_size"],                            # the size of the average pooling layer    
+        input_dim=pre_model_weights["input_dim"],               # the size of the input image
+        fc_layers=pre_model_weights["fc_layers"],               # the size of the fully connected mlp layers 
+        conv_layers=pre_model_weights["conv_layers"],           # the convolutional layers (num_filters, filter_size, maxpool_size, stride)
+        inchannels=pre_model_weights["inchannels"], 
+        avg_pool_size=pre_model_weights["avg_pool_size"],                            # the size of the average pooling layer    
         device=device).to(device)
 
 

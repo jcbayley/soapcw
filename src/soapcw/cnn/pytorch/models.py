@@ -127,8 +127,9 @@ class CNN(nn.Module):
         num_data = y.size(0)                                                                                                                                                     
         x_out = []
         # encode the data into latent space with r1(z,y)          
-        for i in range(num_data):
-            x_out.append(model.forward(y[i]).cpu().numpy())
+        #for i in range(num_data):
+        #    x_out.append(model.forward(y[i]).cpu().numpy())
+        x_out = model.forward(y).cpu().numpy()
         return np.array(x_out)
 
 

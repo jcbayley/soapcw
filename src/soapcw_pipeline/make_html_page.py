@@ -759,6 +759,7 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
                         else:
                             print(f"WARNING: No new updates to {subhead}, {subdir}")
                     else:
+                        print(f"Creating json for {subhead} -- {subdir}")
                         make_json_from_hdf5(subdir, linepaths, table_order, hwinjfile=hwinjfile)
 
                     try:
@@ -921,7 +922,7 @@ def main():
     else:
         hwinjfile = None
 
-    table_order = ["fmin", "fmax", "lineaware_stat", "H1_viterbistat", "L1_viterbistat", "CNN_vitmap_stat", "CNN_spect_stat", "CNN_vitmapstat_stat", "CNN_all_stat", "plot_path"]
+    table_order = ["fmin", "fmax", "lineaware_stat", "H1_viterbistat", "L1_viterbistat", "CNN_vitmap_stat", "CNN_spect_stat", "CNN_vitmapstat_stat", "CNN_vitmapspect", "CNN_all_stat", "plot_path"]
 
     write_pages(cfg, os.path.dirname(os.path.normpath(cfg["output"]["save_directory"])), linepaths, table_order, force_overwrite=args.force_overwrite, hwinjfile=hwinjfile)
 

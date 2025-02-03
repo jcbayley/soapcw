@@ -67,9 +67,26 @@ $(document).ready(function () {
         image.setAttribute("value", $(this).context.sectionRowIndex);
         changeImg(newpath);
         makeInfoTable(table, rowdata);
+
+        /* update the url with the image path */
+        const url = new URL(window.location);
+        url.searchParams.set("selected", newpath);
+        window.history.pushState({}, "", url);
+
         $('#inTable tr').removeClass("selected");
         $(this).addClass('selected');
 
+    });
+
+    /* listen for the selected image in url and show that image */
+    window.addEventListener("load", () => {
+        const url = new URL(window.location);
+        const imagepath = url.searchParams.get("selected");
+
+        // If a selected row is specified, update the image                                                                                    
+        if (imagepath !== null) {
+            changeImg(imagepath);
+        }
     });
 });
 
