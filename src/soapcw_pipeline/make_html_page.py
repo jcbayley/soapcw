@@ -475,7 +475,7 @@ def write_pages(cfg, root_dir, linepaths, table_order, force_overwrite=False, hw
 
 def main():
     import argparse
-    from .soap_config_parser import SOAPConfig
+    from soapcw.soap_config_parser import SOAPConfig
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('-c', '--config-file', help='config file', type=str, required=True, default=None)

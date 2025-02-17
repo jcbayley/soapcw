@@ -129,7 +129,7 @@ tr:hover {
 
 /* Highlight selected row */
 .selected { 
-    background-color: lightblue !important; 
+    background-color: rgba(35, 48, 90, 0.5) !important; 
 }
 
 /* Controls */
