@@ -211,9 +211,9 @@ def return_outputs(
     return_dict = {}
     if "vit_imgs" in save_options:
         return_dict["vit_imgs"] = vit_resize_norm
-        
-    if "stats" in save_options:
-        return_dict["stats"] = viterbi.max_end_prob
+
+    # always save the viterbi statistic    
+    return_dict["stats"] = viterbi.max_end_prob
             
     if "sum_stats" in save_options:
         return_dict["sum_stats"] = sum_viterbi.max_end_prob
@@ -400,7 +400,7 @@ def main():
                     args.band_max,
                     args.band_width,
                     config["cnn_data"]["resize_image"], 
-                    gen_noise_only=config["cnn_data"]["gen_noise_only"],
+                    gen_noise_only_bands=config.getboolean("cnn_data","gen_noise_only_bands"),
                     save_options=config["cnn_data"]["save_options"]
                     )
 

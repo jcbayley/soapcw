@@ -91,7 +91,7 @@ def loop_band_train_augment(
     bandmax,
     band_width,
     resize_image=True,
-    gen_noise_only=False,
+    gen_noise_only_bands=False,
     save_options = None):
     """Loop over the data in load directory and augment to create training data
 
@@ -101,7 +101,7 @@ def loop_band_train_augment(
         bandmax (_type_): _description_
         band_width (_type_): _description_
         resize_image (bool, optional): _description_. Defaults to True.
-        gen_noise_only (bool, optional): _description_. Defaults to False.
+        gen_noise_only_bands (bool, optional): _description_. Defaults to False.
         snr_min (int, optional): _description_. Defaults to 50.
         snr_max (int, optional): _description_. Defaults to 150.
         save_options (_type_, optional): _description_. Defaults to None.
@@ -122,7 +122,7 @@ def loop_band_train_augment(
         else:
             continue
 
-
+    print(f"bandmin: {bandmin}, bandmax: {bandmax}, width: {width}, stride: {stride}, degfree: {degfree}, brange: {brange}")
 
     # in 2Hz band set frequencies and indicies with 0.1 Hz bands not overlapping
     range_bands = np.round(np.arange(bandmin,bandmax-width,width),1)
@@ -131,6 +131,7 @@ def loop_band_train_augment(
     # set which bands are odd and even with and ondex of 1 or 0
     odd_even = np.zeros(len(range_bands))
     odd_even[1::2] = 1
+
 
     bl,be = bandmin,bandmax
 
@@ -194,8 +195,9 @@ def loop_band_train_augment(
         
         # set initial band frequency
         k = range_bands[i]
+        
         # band width is 0.1 Hz
-        width = 0.1
+        #width = 0.1
 
         # choose sub bands to skip, this list is hardware injections
         skip_band = False
@@ -210,7 +212,6 @@ def loop_band_train_augment(
         #snr_start,snr_end = 80,150
         ms = int(range_index[i])
         me = int(ms+nbin*stride)
-
         # put odd bands into one folder and even bands into another folder
         if odd_even[i] == 1:
             #outpath = os.path.join(path,"odd")
@@ -219,8 +220,9 @@ def loop_band_train_augment(
             #outpath = os.path.join(path,"even")
             split = "even"
             
-        # shift data up and down in frequency by n bins    
-        shifts = [ms,ms + 30*stride,ms - 30*stride,ms + 60*stride, ms - 60*stride]
+        # shift data up and down in frequency by n bins  
+        shifts = [ns_bin*stride for ns_bin in config["cnn_data"]["shift_bins"]]  
+        #shifts = [ms,ms + 30*stride,ms - 30*stride,ms + 60*stride, ms - 60*stride]
 
         # loop over all of the augmentation shifts
         for cts in shifts:
@@ -243,7 +245,7 @@ def loop_band_train_augment(
             noise_outs1, signal_outs1 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,
-                gen_noise_only=gen_noise_only,
+                gen_noise_only_bands=gen_noise_only_bands,
                 save_options=  save_options, stride = stride, 
                 degfree = degfree, brange = brange, sfts=sfts,
                 )
@@ -258,7 +260,7 @@ def loop_band_train_augment(
             noise_outs2, signal_outs2 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
-                gen_noise_only=gen_noise_only,
+                gen_noise_only_bands=gen_noise_only_bands,
                 save_options=save_options, stride = stride, 
                 degfree = degfree, brange = brange,sfts=sfts,
                 )
@@ -273,7 +275,7 @@ def loop_band_train_augment(
             noise_outs3, signal_outs3 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,
-                gen_noise_only=gen_noise_only,
+                gen_noise_only_bands=gen_noise_only_bands,
                 save_options=save_options, stride = stride, 
                 degfree = degfree, brange = brange,sfts=sfts,
                 )
@@ -288,13 +290,13 @@ def loop_band_train_augment(
             noise_outs4, signal_outs4 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
-                gen_noise_only=gen_noise_only,
+                gen_noise_only_bands=gen_noise_only_bands,
                 save_options=save_options, stride = stride, 
                 degfree = degfree, brange = brange,sfts=sfts,
                 )
             
             del datah,datal
-
+            
             for key in save_options:
                 if split == "even":
                     even_noise_save_outs[key].extend([noise_outs1[key],noise_outs2[key],noise_outs3[key],noise_outs4[key] ])
@@ -302,6 +304,8 @@ def loop_band_train_augment(
                 elif split == "odd":
                     odd_noise_save_outs[key].extend([noise_outs1[key],noise_outs2[key],noise_outs3[key],noise_outs4[key] ])
                     odd_signal_save_outs[key].extend([signal_outs1[key],signal_outs2[key],signal_outs3[key],signal_outs4[key]])
+                else:
+                    raise Exception("split not even or odd")
 
 
     print("saving data to file .......")
@@ -372,7 +376,7 @@ def loop_band_train_augment(
 
 
 
-def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen_noise_only=False, save_options = None, stride = 1,degfree = 96, brange = "", sfts = None):
+def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen_noise_only_bands=False, save_options = None, stride = 1,degfree = 96, brange = "", sfts = None):
     """_summary_
 
     Args:
@@ -383,7 +387,7 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         resize_image (bool, optional): _description_. Defaults to False.
         snrrange (tuple, optional): _description_. Defaults to (50,150).
         av_sh (_type_, optional): _description_. Defaults to None.
-        gen_noise_only (bool, optional): _description_. Defaults to False.
+        gen_noise_only_bands (bool, optional): _description_. Defaults to False.
         save_options (_type_, optional): _description_. Defaults to None.
         stride (int, optional): _description_. Defaults to 1.
         degfree (int, optional): _description_. Defaults to 96.
@@ -403,8 +407,8 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
     # hardcoded start times as nsft
     nsft, tstart, tsft, flow, fhigh = sfts.H1.nsft, sfts.H1.epochs[0], 1800., fmin,fmin+width
     fmax = fmin + width
-    # not gen_noise_only means that we also generate the noise bands as well as the injected bands
-    if gen_noise_only: 
+    # not gen_noise_only_bands means that we also generate the noise bands as well as the injected bands
+    if gen_noise_only_bands: 
         # save noise realisation 1
         out_snr_noise = "snr_0.0_0.0"
         sig = cw.GenerateSignal()
@@ -422,9 +426,16 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         sig.tref = tstart
         
         Sn = {"H1":av_sh[0],"L1":av_sh[1]}
+        # just gaussian noise
+        #data = sig.get_spectrogram(
+        #    tstart = tstart, nsft = nsft,tref=tstart,tsft=tsft,fmin=fmin,fmax=fmax,snr=0,dets= ["H1","L1"],Sn=Sn
+        #    )
+        #use real data
         data = sig.get_spectrogram(
-            tstart = tstart, nsft = nsft,tref=tstart,tsft=tsft,fmin=fmin,fmax=fmax,snr=0,dets= ["H1","L1"],Sn=Sn
+            tstart = tstart, nsft = len(datah),tref=tstart,tsft=tsft,
+            fmin=fmin,fmax=fmax,snr=0,noise_spect={"H1":datah,"L1":datal}
             )
+
         data.sum_sfts()
         data.downsamp_frequency(stride=stride,data_type="summed_norm_sft_power",remove_original=False)
 

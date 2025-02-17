@@ -11,12 +11,16 @@ import matplotlib.pyplot as plt
 
 class LoadData(torch.utils.data.Dataset):
 
-    def __init__(self, noise_load_directory, signal_load_directory, load_types = ["stats", "vit_imgs", "H_imgs", "L_imgs"], shuffle=True, nfile_load="all"):
+    def __init__(self, noise_load_directory, signal_load_directory, load_types = ["stats", "vit_imgs", "H_imgs", "L_imgs"], shuffle=True, nfile_load="all", snr_min=None, snr_max=None, return_parameters=False):
         self.load_types = load_types
         self.noise_load_directory = noise_load_directory
         self.signal_load_directory = signal_load_directory
         self.shuffle = shuffle
         self.nfile_load = nfile_load
+        self.snr_min = snr_min
+        self.snr_max = snr_max
+        self.return_parameters = return_parameters
+    
         self.get_filenames()
         if "H_imgs" in self.load_types and "L_imgs" in self.load_types and "vit_imgs" in self.load_types:
             self.n_load_types = len(self.load_types) - 2
@@ -48,13 +52,15 @@ class LoadData(torch.utils.data.Dataset):
         Returns:
             _type_: data, truths arrays
         """
-        noise_data, pars, pname = self.load_file(self.noise_filenames[idx])
-        signal_data, pars, pname = self.load_file(self.signal_filenames[idx]) 
+        noise_data, noise_pars, pname = self.load_file(self.noise_filenames[idx], noise_only = True)
+        signal_data, signal_pars, pname = self.load_file(self.signal_filenames[idx]) 
         #print(self.n_load_types)
+        pars = list(noise_pars) + list(signal_pars)
 
         tot_data = [torch.cat([torch.Tensor(noise_data[i]).squeeze(), torch.Tensor(signal_data[i]).squeeze()], dim=0) for i in range(self.n_load_types)]
 
         truths = torch.cat([torch.zeros(len(noise_data[0])), torch.ones(len(signal_data[0]))])
+
         if self.shuffle:
             shuffle_inds = np.arange(len(truths))
             np.random.shuffle(shuffle_inds)
@@ -64,9 +70,12 @@ class LoadData(torch.utils.data.Dataset):
 
         truths = torch.nn.functional.one_hot(torch.Tensor(truths).to(torch.int32).long(), 2)
 
-        return tot_data, truths 
+        if self.return_parameters:
+            return tot_data, truths, pars, pname
+        else:
+            return tot_data, truths 
 
-    def load_file(self, fname):
+    def load_file(self, fname, noise_only = False):
         """loads in one hdf5 containing data 
 
         Args:
@@ -78,6 +87,10 @@ class LoadData(torch.utils.data.Dataset):
         with h5py.File(fname, "r") as f:
             output_data = []
             imgdone = False
+            # enforce snr limits
+            pars = np.array(f["pars"])
+            parnames = [pn.decode() for pn in list(f["parnames"])]
+
             for data_type in self.load_types:
                 if data_type in ["H_imgs", "L_imgs", "vit_imgs"]:
                     if imgdone:
@@ -91,8 +104,10 @@ class LoadData(torch.utils.data.Dataset):
                 else:
                     output_data.append(np.array(f[data_type]))
 
-            pars = np.array(f["pars"])
-            parnames = list(f["parnames"])
+        if self.snr_min is not None and self.snr_max is not None and noise_only is False:
+            snrs = pars[:, parnames.index("snr")]
+            output_data = [output_data[i][np.logical_and(snrs >= self.snr_min, snrs <= self.snr_max)] for i in range(len(output_data))]
+            pars = pars[np.logical_and(snrs >= self.snr_min, snrs <= self.snr_max)]
 
         return output_data, pars, parnames
 
@@ -199,8 +214,15 @@ def train_model(
     fmax=500, 
     n_epochs=10, 
     save_interval=100, 
-    verbose=True,
-    n_train_multi_size=None):
+    verbose=False,
+    n_train_multi_size=None,
+    scheduler_start = 0,
+    scheduler_length = 100,
+    scheduler_weight = 0.1,
+    continue_train=False,
+    train_snr_min = None,
+    train_snr_max = None
+    ):
     """_summary_
 
     Args:
@@ -233,8 +255,13 @@ def train_model(
     train_noise_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
     train_signal_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
 
-    val_noise_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
-    val_signal_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
+    val_noise_dir = os.path.join(load_dir, "validation", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
+    val_signal_dir = os.path.join(load_dir, "validation", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
+
+    model_fname = os.path.join(save_dir, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt")
+    if verbose:
+        print("Loading data from: ", train_noise_dir, train_signal_dir)
+        print("Saving model to: ", model_fname)
 
     if model_type == "spectrogram":
         load_types = ["H_imgs", "L_imgs"]
@@ -250,9 +277,26 @@ def train_model(
     else:
         raise Exception(f"Load type {model_type} not defined select from [spectrogram, vitmap, vit_imgs, vitmapspectrogram, vitmapspectstatgram]")
 
+    if train_snr_min is None:
+        train_snr_min = snrmin
+    if train_snr_max is None:
+        train_snr_max = snrmax
 
-    train_dataset = LoadData(train_noise_dir, train_signal_dir, load_types=load_types)
-    validation_dataset = LoadData(val_noise_dir, val_signal_dir, load_types=load_types, nfile_load=2)
+    train_dataset = LoadData(
+        train_noise_dir, 
+        train_signal_dir, 
+        load_types=load_types,
+        snr_min = train_snr_min,
+        snr_max = train_snr_max)
+
+    validation_dataset = LoadData(
+        val_noise_dir, 
+        val_signal_dir, 
+        load_types=load_types, 
+        nfile_load=2,
+        snr_min = train_snr_min,
+        snr_max = train_snr_max)
+
     print("Training data len: ", len(train_dataset))
     print("Validation data len: ", len(validation_dataset))
     trd0 = train_dataset[0]
@@ -279,31 +323,52 @@ def train_model(
     print("model")
     #print(torchsummary.summary(model, (in_channels, img_dim[0], img_dim[1])))
 
-    print("model loaded")
-
     optimiser = torch.optim.Adam(model.parameters(), lr = learning_rate)
+    scheduler_end = scheduler_start + scheduler_length
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimiser, eta_min = scheduler_weight*learning_rate, T_max=scheduler_length)
     loss_fn = torch.nn.BCEWithLogitsLoss()
 
     if load_model is not None:
-        checkpoint = model.load(load_model)
+        if os.path.isfile(load_model):
+            load_model_fname = load_model
+        elif os.path.isdir(load_model):
+            load_model_fname = os.path.join(load_model, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt")
+        else:
+            raise Exception(f"Model path {load_model} not found")
+        checkpoint = torch.load(load_model_fname, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
-        optimiser.load_state_dict(checkpoint["optimiser_state_dict"])
+        if continue_train:
+            optimiser.load_state_dict(checkpoint["optimiser_state_dict"])
 
-    if n_train_multi_size is not None and avg_pool_size is None:
+            with open(os.path.join(save_dir, f"losses_for_{model_type}_{other_bandtype}_F{fmin}_{fmax}.txt"), "r") as f:
+                loaded_losses = np.loadtxt(f, skiprows=1)
+                all_losses = list(loaded_losses[:,0])
+                all_val_losses = list(loaded_losses[:,1])
+                start_epoch = len(all_val_losses)
+        else:
+            all_losses = []
+            all_val_losses = []
+            start_epoch = 0
+
+    else:
+        all_losses = []
+        all_val_losses = []
+        start_epoch = 0
+
+    print("model loaded")
+
+    if n_train_multi_size not in [None, "none"] and avg_pool_size in [None, "none"]:
         raise Exception("Train multi batch can only be used with adaptive average pooling avg_pool_size")
 
-    all_losses = []
-    all_val_losses = []
     print("training....")
-    for epoch in range(n_epochs):
-
+    for epoch in range(start_epoch, n_epochs):
         epoch_start = time.time()
         losses = []
         mean_batch_time = [time.time()]
         batch_times = [time.time()]
         for batch_data, batch_labels in train_dataset:
             bt_start = batch_times[-1]
-            if n_train_multi_size is not None:
+            if n_train_multi_size not in [None, "none"]:
                 loss = train_multi_batch(model, optimiser, loss_fn, batch_data, batch_labels, device=device, n_train_multi_size=n_train_multi_size)
             else:
                 loss = train_batch(model, optimiser, loss_fn, batch_data, batch_labels, device=device)    
@@ -314,12 +379,12 @@ def train_model(
             if verbose:
                 print(f"batch_time: {batch_time}")
 
-        print(f"mean_batch_time: {np.mean(batch_times)}")
+        print(f"mean_batch_time: {np.mean(mean_batch_time[1:])}")
         
         with torch.no_grad():
             val_losses = []
             for i, (batch_data, batch_labels) in enumerate(validation_dataset):
-                if n_train_multi_size is not None:
+                if n_train_multi_size not in [None, "none"]:
                     vloss = train_multi_batch(model, optimiser, loss_fn, batch_data, batch_labels, train=False, device=device, n_train_multi_size=n_train_multi_size)
                 else:
                     vloss = train_batch(model, optimiser, loss_fn, batch_data, batch_labels, train=False, device=device)    
@@ -327,9 +392,12 @@ def train_model(
                 if i > 10:
                     break
         
+        if scheduler_end > epoch >= scheduler_start:
+            scheduler.step()
+
         mloss = np.mean(losses)
         mvloss = np.mean(val_losses)
-        all_losses.extend(losses)
+        all_losses.append(mloss)
         all_val_losses.append(mvloss)
         print(f"Epoch: {epoch}, Loss: {mloss} val_loss: {mvloss}, epoch_time: {time.time() - epoch_start}")
         if epoch % save_interval == 0:
@@ -341,23 +409,32 @@ def train_model(
                 "conv_layers":conv_layers, 
                 "inchannels":in_channels, 
                 "avg_pool_size":avg_pool_size,
-            }, os.path.join(save_dir, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt"))
+            }, model_fname)
 
 
             fig, ax = plt.subplots()
             ax.plot(all_losses, label="training loss")
+            ax.plot(all_val_losses, label="validation loss")
             ax.set_xlabel("iteration")
             ax.set_ylabel("Loss")
+            ax.set_yscale("log")
             ax.legend()
             fig.savefig(os.path.join(save_dir, f"losses_for_{model_type}_{other_bandtype}_F{fmin}_{fmax}.png"))
 
+            with open(os.path.join(save_dir, f"losses_for_{model_type}_{other_bandtype}_F{fmin}_{fmax}.txt"), "w") as f:
+                np.savetxt(f, np.array([all_losses, all_val_losses]).T, header="train_loss, val_loss")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-v', '--verbose', help='display status', action='store_true')
     parser.add_argument("-c", "--config-file", help="config file contatining parameters")
-
+    parser.add_argument("-bt", "--band-type", help="force to train either even or odd band", default=None)
+    parser.add_argument("-ct", "--continue-train", help="load_model and continue training", action='store_true')
+    parser.add_argument("-fmin", "--fmin", help="low frequency", default=20, type=float)
+    parser.add_argument("-fmax", "--fmax", help="high frequency", default=500, type=float)
+    parser.add_argument("-lm", "--load-model", help="load model from path", default=None)
+    parser.add_argument("-lr", "--learning-rate", help="learning rate", default=None, type=float)
     device = "cuda:0"
 
     try:                                                     
@@ -370,7 +447,28 @@ def main():
     if args.config_file is not None:
         cfg = SOAPConfig(args.config_file)
 
-    for bandtype in cfg["cnn_model"]["band_types"]:
+    if args.band_type is not None:
+        bandtypes = [str(args.band_type), ]
+    else:
+        bandtypes = cfg["cnn_model"]["band_types"]
+
+    if args.continue_train and args.load_model is not None:
+        raise Exception("Must provide a model path directory (--load-model) or continue training from default checkpoint (--continue-train)")
+    elif args.continue_train and args.load_model is None:
+        print("-------------------------")
+        print("continuing from previous checkpoint")
+        model_load_dir = cfg["output"]["cnn_model_directory"]
+    elif not args.continue_train and args.load_model is not None:
+        print("---------------------------")
+        print("Loading model from: ", args.load_model)
+        model_load_dir = args.load_model
+    else:
+        model_load_dir = None
+
+    if args.learning_rate is not None:
+        cfg["cnn_model"]["learning_rate"] = str(args.learning_rate)
+
+    for bandtype in bandtypes:
         train_model(cfg["cnn_model"]["model_type"], 
                     cfg["output"]["cnn_model_directory"], 
                     cfg["output"]["cnn_train_data_save_dir"], 
@@ -384,7 +482,21 @@ def main():
                     n_epochs = cfg["cnn_model"]["n_epochs"],
                     device=device,
                     save_interval=cfg["cnn_model"]["save_interval"],
-                    n_train_multi_size=cfg["cnn_model"]["n_train_multi_size"])
+                    n_train_multi_size=cfg["cnn_model"]["n_train_multi_size"],
+                    load_model=model_load_dir,
+                    fmin=args.fmin,
+                    fmax=args.fmax,
+                    snrmin=cfg["cnn_data"]["snrmin"],
+                    snrmax=cfg["cnn_data"]["snrmax"],
+                    scheduler_start = cfg["cnn_model"]["scheduler_start"],
+                    scheduler_length = cfg["cnn_model"]["scheduler_length"],
+                    scheduler_weight = cfg["cnn_model"]["scheduler_weight"],
+                    continue_train=args.continue_train,
+                    train_snr_max=cfg.get("cnn_model", "train_snr_max"),
+                    train_snr_min=cfg.get("cnn_model", "train_snr_min"),
+                    verbose=args.verbose
+                    )
+
 
 
 if __name__ == "__main__":
