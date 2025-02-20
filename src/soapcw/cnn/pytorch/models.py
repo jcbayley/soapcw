@@ -4,7 +4,7 @@ import numpy as np
 
 class CNN(nn.Module):
 
-    def __init__(self, input_dim, fc_layers = [], conv_layers = [], stride = 1, device="cpu", dropout=0.1, inchannels = 1, avg_pool_size=None):
+    def __init__(self, input_dim, fc_layers = [], conv_layers = [], stride = 1, device="cpu", dropout=0.0, inchannels = 1, avg_pool_size=None):
         """
         args
         ----------

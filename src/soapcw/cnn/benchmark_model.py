@@ -415,6 +415,9 @@ def main():
     else:
         bandtypes = cfg["cnn_model"]["band_types"]
 
+    print("-----------------------------------------")
+    print([(key, val) for key,val in cfg["output"].items()])
+
     for bandtype in bandtypes:
         run_model(cfg["cnn_model"]["model_type"], 
                     cfg["output"]["cnn_model_directory"], 

@@ -166,6 +166,7 @@ def loop_band_train_augment(
     # make appropriate directoes
     if not os.path.isdir(path):
         os.makedirs(path)
+
     erange = 15
 
     noise_out_snr = "snr_0.0_0.0"
@@ -225,8 +226,9 @@ def loop_band_train_augment(
         #shifts = [ms,ms + 30*stride,ms - 30*stride,ms + 60*stride, ms - 60*stride]
 
         # loop over all of the augmentation shifts
-        for cts in shifts:
+        for shft in shifts:
             #set band as index plut 180 bins i.e. 0.1 Hz
+            cts = ms + shft
             cte = int(cts + 180*stride)
             if cts < 0 or cte >= sfts.H1.nbins:
                 continue
@@ -459,6 +461,9 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         noise_outputs["pars"]["width"] = width
         noise_outputs["pars"]["fmin"] = data.H1.fmin
         noise_outputs["pars"]["fmax"] = data.H1.fmax
+        param_list = ["f","fd","alpha","sindelta","phi0","psi","cosi"]
+        for param in param_list:
+            noise_outputs["pars"][param] = np.nan
     # inject signal into band
 
     sig = cw.GenerateSignal()
@@ -519,7 +524,16 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
     sig.tref = tstart
 
             
-    data = sig.get_spectrogram(tstart = tstart, nsft = len(datah),tref=tstart,tsft=tsft,fmin=flow,fmax=fhigh,snr=snr,noise_spect={"H1":datah,"L1":datal})
+    data = sig.get_spectrogram(
+        tstart = tstart, 
+        nsft = len(datah),
+        tref=tstart,
+        tsft=tsft,
+        fmin=flow,
+        fmax=fhigh,
+        snr=snr,
+        noise_spect={"H1":datah,"L1":datal})
+
     data.sum_sfts()
     data.downsamp_frequency(stride=stride,data_type="summed_norm_sft_power",remove_original=False)
 
