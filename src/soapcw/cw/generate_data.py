@@ -4,6 +4,7 @@ import timeit
 import lal
 import lalpulsar
 from lalpulsar import simulateCW
+import pyfstat
 from scipy.special import fresnel
 import scipy.stats as st
 import time
@@ -14,7 +15,11 @@ import subprocess
 from .sft import SFT
 from .timeseries import TimeSeries
 from .tools import download_ephemeris_file, LAL_EPHEMERIS_URL
+import logging
 
+logging.basicConfig(level=logging.INFO, 
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S') 
 
 class GenerateSignal:
     
@@ -46,11 +51,11 @@ class GenerateSignal:
         snr: float
             SNR of signal, overwrites the h0 parameter
         """
-        if earth_ephem is None:
+        if earth_ephem in [None,"none",0]:
             self.earth_ephem = "earth00-40-DE430.dat.gz"
         else:
             self.earth_ephem = earth_ephem
-        if sun_ephem is None:
+        if sun_ephem in [None,"none",0]:
             self.sun_ephem = "sun00-40-DE430.dat.gz"
         else:
             self.sun_ephem = sun_ephem
@@ -72,6 +77,28 @@ class GenerateSignal:
         self.siteinfo = {}
         self.earth = lalpulsar.EarthState()
         self.emit = lalpulsar.EmissionTime()
+
+    @property
+    def earth_ephem(self):
+        return self._earth_ephem
+
+    @earth_ephem.setter
+    def earth_ephem(self, earth_ephem):
+        if earth_ephem in [None,"none",0]:
+            self._earth_ephem = "earth00-40-DE430.dat.gz"
+        else:
+            self._earth_ephem = earth_ephem
+
+    @property
+    def sun_ephem(self):
+        return self._sun_ephem
+
+    @sun_ephem.setter
+    def sun_ephem(self, sun_ephem):
+        if sun_ephem in [None,"none",0]:
+            self._sun_ephem = "sun00-40-DE430.dat.gz"
+        else:
+            self._sun_ephem = sun_ephem
         
     def param_check(self):
         
@@ -390,7 +417,7 @@ class GenerateSignal:
 
 
         
-    def get_spectrogram(self,fmin=None,fmax=None,tsft=None,epochs=None,Sn=None,tstart=None,nsft=None,dets=None,snr=None,doppler=True,pulsar_path=None,tref=None,antenna=True,noise_spect=None):
+    def get_spectrogram(self,fmin=None,fmax=None,tsft=None,epochs=None,Sn=None,tstart=None,nsft=None,dets=None,snr=None,doppler=True,pulsar_path=None,tref=None,antenna=True,noise_spect=None, noise_sft=None,real_data=False, rng_med=None, sftpaths=None):
         """
         generates a spectrogram from the signal given some inputs
         
@@ -435,11 +462,15 @@ class GenerateSignal:
                 {"spect":spectrogram,"pulsar_path":pulsars track etc}
         
         """
+        if real_data:
+            spt = SimulateSpectrogramfromSFT(self)
         
-        spt = SimulateSpectrogram(self)
-        
-        spt.__gen_spect__(epochs=epochs,tstart = tstart, nsft=nsft,tsft=tsft,fmin=fmin,fmax=fmax,dets=dets,snr=snr,Sn=Sn,doppler=doppler,antenna=antenna,tref=tref,pulsar_path=pulsar_path,noise_spect=noise_spect)
+            spt.__gen_spect__(epochs=epochs,tstart = tstart, nsft=nsft,tsft=tsft,fmin=fmin,fmax=fmax,dets=dets,snr=snr,Sn=Sn,doppler=doppler,antenna=antenna,tref=tref,pulsar_path=pulsar_path,noise_sft=noise_sft, rng_med=rng_med, sftpaths=sftpaths)
+        else:
+            spt = SimulateGaussianNoiseSpectrogram(self)
             
+            spt.__gen_spect__(epochs=epochs,tstart = tstart, nsft=nsft,tsft=tsft,fmin=fmin,fmax=fmax,dets=dets,snr=snr,Sn=Sn,doppler=doppler,antenna=antenna,tref=tref,pulsar_path=pulsar_path,noise_spect=noise_spect)
+                
         return spt
     
     def get_timeseries(self,duration = None,tstart=None,tref=None,Sn=None,detectors=None,sample_frequency=4096):
@@ -568,7 +599,7 @@ class SimulateTimeseries:
             timeseries.delta_t = 1./timeseries.sample_frequency
         return timeseries
 
-class SimulateSpectrogram:
+class SimulateGaussianNoiseSpectrogram:
     
     def __init__(self,parent):
         self._parent = parent
@@ -759,9 +790,13 @@ class SimulateSpectrogram:
             snr_bar = 0
             for dt in dets:
                 if self.snr !=0:
-                    snr_bar += np.nansum(self._parent.get_snr2(epochs=self.epochs,alpha=self.alpha,delta=self.delta,psi=self.psi,phi0=self.phi0,cosi=self.cosi, Sn=self.Sn[dt],det=dt,tsft=self.tsft, h0=h0_bar, antenna=self.antenna_pattern))
+                    logging.info(f"SN: {self.Sn[dt]}")
+                    t_snr_bar = np.nansum(self._parent.get_snr2(epochs=self.epochs,alpha=self.alpha,delta=self.delta,psi=self.psi,phi0=self.phi0,cosi=self.cosi, Sn=self.Sn[dt],det=dt,tsft=self.tsft, h0=h0_bar, antenna=self.antenna_pattern))
+                    snr_bar += t_snr_bar
+                    logging.info(f"snr: {self.snr}, {t_snr_bar}")
                 #print("SNRBAR1: {}".format(snr_bar))
             scale = self.snr/np.sqrt(snr_bar)
+            logging.info(f"scale: {scale}, snr: {self.snr}, sqrt_snr_bar: {np.sqrt(snr_bar)}")
             self.h0 = h0_bar*scale
         elif self.h0 is not None and self.Sn is not None:
             self.h0 = self.h0
@@ -950,21 +985,6 @@ class SimulateSpectrogram:
                 if snrsq == 0:
                     continue
                 
-                # if spectrum already defined have offset based of snr of noise line
-                if noise_spect is not None:
-                    # get area around signal injection
-                    limlist = np.array(ind_floor + limits).astype(int)
-                    # get area within band bounds
-                    limlist = limlist[limlist > 0]
-                    limlist = limlist[limlist < len(sft.norm_sft_power[0])]
-                    # take the median of the power in this area, subtract the chi2 mean and divide by power (SNR_{line_signal} = ((P_{line_signal} + P_noise - P_noise)/P_noise)
-                    # !!!!!!!!!!!!!!!!!!!currently turned off!!!!!!!!!!!!!!!!!!!!!!!!!
-                    noise_offset = 0#np.median(sft.norm_sft_power[i,limlist]) - 2
-                    if np.isnan(noise_offset) or noise_offset < 0:
-                        noise_offset = 0
-                else:
-                    noise_offset = 0
-                    
                 # loop over the area around injection
                 for lim in limits:
                     #bin center location
@@ -973,8 +993,22 @@ class SimulateSpectrogram:
 
                     if bin_floor_index < 0 or bin_floor_index >= len(sft.norm_sft_power[0]):
                         continue
-                    
+
+                    if noise_spect is not None:
+                        # set window width of noise median as \pm 1 bins
+                        limlist = np.array(bin_floor_index + np.arange(5)-2).astype(int)
+                        limlist = limlist[limlist > 0]
+                        limlist = limlist[limlist < len(sft.norm_sft_power[0])]
+                        # take the median of the power in this area, subtract the chi2 mean and divide by power (SNR_{line_signal} = ((P_{line_signal} + P_noise - P_noise)/P_noise)
+                        noise_offset = np.median(sft.norm_sft_power[i,limlist])/2 - 2
+                        # distribute the power across \pm n bins accoring to the fresnel integral and multiply by the snr for that bin add noise offset if this exists
+                        if np.isnan(noise_offset) or noise_offset < 0:
+                            noise_offset = 0
+                    else:
+                        noise_offset = 0
+
                     # distribute the power across \pm n bins accoring to the fresnel integral and multiply by the snr for that bin add noise offset if this exists
+
                     update_index.append([int(i),int(bin_floor_index),bin_cent_freq,pul_freq,snrsq,noise_offset])
 
             # update bins which have signal in them
@@ -1035,7 +1069,474 @@ class SimulateSpectrogram:
             data = getattr(self,dt)
             data.downsamp_frequency(data_type=data_type,stride=stride,remove_original=remove_original)
 
-            
 
+class SimulateSpectrogramfromSFT(SimulateGaussianNoiseSpectrogram):
     
+    def __init__(self,parent, dt_wf=900):
+        self._parent = parent
+        # waveform dt, default is 60s for isolated neutron stars
+        self.dt_wf = dt_wf
+        
+    def __getattr__(self, name):
+        if name in self._parent.__dict__:
+            try:
+                return getattr(self._parent, name)
+            except AttributeError:
+                pass
 
+        if name not in self.__dict__:
+            raise AttributeError(name)
+        return self.__dict__[name]
+
+
+              
+    def waveform(self, h0, cosi, freq, f1dot):
+        def wf(dt):
+            dphi = lal.TWOPI * (freq * dt + f1dot * 0.5 * dt**2)
+            ap = h0 * (1.0 + cosi**2) / 2.0
+            ax = h0 * cosi
+            return dphi, ap, ax
+        return wf
+
+    def get_h0_from_SNR(self, snr, sftpaths):
+
+        logging.debug(f"SFTPATH {sftpaths}")
+        constraints = lalpulsar.SFTConstraints()
+
+        # only select sfts with start time (epoch) in range tmin-tmax
+
+        tmin_gps = lal.LIGOTimeGPS(int(self.epochs[0]),0)
+        constraints.minStartTime=tmin_gps
+
+        tmax_gps = lal.LIGOTimeGPS(int(self.epochs[-1]),0)
+        constraints.maxStartTime=tmax_gps
+
+        snr_ = pyfstat.SignalToNoiseRatio.from_sfts(
+            F0=self.f[0], 
+            sftfilepath=sftpaths,
+            sft_constraint=constraints)
+
+        h0 = snr_.compute_h0_from_snr2(
+            self.alpha,
+            self.delta,
+            self.psi,
+            self.phi0,
+            self.cosi,
+            snr**2)
+
+        return h0
+
+    def __gen_spect__(self,fmin=None,fmax=None,tsft=None,epochs=None,Sn=None,tstart=None,nsft=None,dets="H1",snr=None,doppler=False,tref=None,rand=True,antenna=True,pulsar_path=None,noise_sft=None, real_data=False, rng_med=None, sftpaths=None):
+        """
+        generates a normalised spectrogram, such that the mean of the noise is 2, (i.e. chi2 distribued data) and injectes a signal defined by GenerateSignal.
+        -----------
+        args
+        -----------
+        tsft: float
+            length of each sft
+        fmin: float
+            lower frequency band
+        fmax: float
+            upper frequency band
+        tstart: float (optional)
+            start time in epoch time (set by first element of epochs if epochs defined)
+        T: int (optional)
+            length of time in number of sfts (set by epochs and tsft if they are defined)
+        tref: int (optional)
+            reference time for pulsar parameters, default tstart
+        det: string or list
+            which detector , 'H1','L1' etc, if multiple detectors ["H1","L1",....] etc
+        snr: float (optional)
+            snr of signal, if none uses h0 from params to find snr (the recovered SNR should be used as an actual measure of SNR, usually the same as this)
+        antenna: bool (optioal)
+            True for antenna pattern, false for no antenna pattern (default is True)
+        rand: bool (optional)
+            use random data or flat background with just signal (default is True)
+        doppler: bool (optional)
+            turn on or off doppler modulation of signal (default is True)
+        Sn: float or array
+            either a float for a fixed noise level, or array containing noise floor for each sft where gaps are NaN, if there are multiple (N) detectors Sn should N dimensional, either Nx1 or Nx(nsft) 
+
+        """
+        
+        #self.param_check()
+        # set the epochs and sft parameters from inputs
+
+        noise_spect = {key:np.abs(noise_sft[key])**2 for key in noise_sft.keys()}
+        
+        self._parent.get_edat()
+        self.T = None
+        if fmin is None:
+            raise Exception("Please set fmin as minimum frequency")
+        else:
+            self.fmin = fmin
+        if fmax is None:
+            raise Exception("Please set fmax as maximum frequency")
+        else:
+            self.fmax = fmax
+        if tsft is None:
+            raise Exception("Please set an sft length")
+        else:
+            self.tsft = tsft
+    
+        if snr is not None:
+            self.snr = snr
+        else:
+            self.snr = None
+
+        # define the noise floor if specified
+        if dets is None and Sn is None and noise_spect is None:
+            raise Exception("Please define the detectors (dets), noisefloors (Sn) or real data (noise_spect) to simulate")
+        elif dets is None and type(Sn) in [dict]:
+            dets = list(Sn.keys())
+        elif dets is None and noise_spect is not None:
+            dets = list(noise_spect.keys())
+        elif type(dets) in [str]:
+            dets = [dets]
+
+        # if using multiple of the same detector, set the duplicate of noise floors
+        if len(set(dets)) == len(dets):
+            self.det_names = dets
+        elif len(set(dets)) < len(dets):
+            sa = set(dets)
+            sd = {}
+            for i in sa:
+                sd.setdefault(i,0)
+            self.det_names = []
+            for i in dets:
+                for j in sd.keys():
+                    if i == j:
+                        self.det_names.append(j + "_{}".format(sd[j]))
+                        sd[j] +=1
+                    else:
+                        pass
+        
+            
+        if noise_spect is not None:
+            self.nsft = len(noise_spect[self.det_names[0]])
+        
+        # set the epochs for each sft, if it has not been defined already
+        if epochs is None:
+            if tstart is None or tsft is None and nsft is None:
+                raise Exception("Please define either epochs or [tstart,tsft,nsft]")
+            self.nsft = nsft
+            self.T = nsft*tsft
+            self.tstart = tstart
+            self.epochs = np.linspace(tstart,tstart+(self.nsft-1)*tsft,self.nsft)
+        else:
+            self.epochs = epochs
+            self.tstart = self.epochs[0]
+            self.nsft = len(self.epochs)
+            self.tsft = epochs[1] - epochs[0]
+
+        # if the noise floor is not defined then define it, also check that if this is a list then 
+        # also set it as an array of length epochs
+        # want to define Sn as a dictionary so can be redefined later
+        
+        if Sn is not None:
+            print("Your value of Sn will not be used, using noise spect instead")
+        self.Sn = {}
+        # for each detector get the positions where the noise is nan and set this as gap (igner noise floor value at this point as would normalise out anyhow)
+        for dt in noise_spect.keys():
+            sn_temp = np.ones(len(noise_spect[dt]))
+            for ind,val in enumerate(np.median(noise_spect[dt],axis=1)):
+                if val == 2 or np.isnan(val):
+                    sn_temp[ind] = np.nan
+                else:
+                    sn_temp[ind] = val
+            self.Sn[dt] = sn_temp
+            del sn_temp
+
+
+        
+        # set the scaled h0 of the signal based of the snr and the noise floor for each epoch and detector
+        if self.snr is not None and self.snr>=0 and self.Sn is not None:
+            #h0_bar = 1
+            #snr_bar = 0
+            #for dt in dets:
+            #    if self.snr !=0:
+            #        snr_bar += np.nansum(self._parent.get_snr2(epochs=self.epochs,alpha=self.alpha,delta=self.delta,psi=self.psi,phi0=self.phi0,cosi=self.cosi, Sn=self.Sn[dt],det=dt,tsft=self.tsft, h0=h0_bar, antenna=self.antenna_pattern))
+                #print("SNRBAR1: {}".format(snr_bar))
+
+            if self.snr == 0:
+                self.h0 = 0
+            else:
+                self.h0 = self.get_h0_from_SNR(snr, f"{sftpaths['H1']};{sftpaths['L1']}")
+                #scale = self.snr/np.sqrt(snr_bar)
+            #self.h0 = h0_bar*scale
+        elif self.h0 is not None and self.Sn is not None:
+            self.h0 = self.h0
+        else:
+            raise Exception("Please define either snr or h0 and Sn")
+
+        
+
+        self.harmonic_sum_Sn = 0
+        # simulate the spectrogram for each detector
+        logging.info("Generating spectrograms ....")
+        for dn,dt in zip(self.det_names,dets):
+            # generate the spectrogram
+            det_data = self.__sim_data__(
+                epochs=self.epochs,
+                tstart=self.tstart,
+                nsft=self.nsft,
+                pulsar_path=pulsar_path,
+                tref=tref,
+                det=dt,
+                antenna=antenna, 
+                rand=rand,
+                doppler=doppler,
+                Sn = self.Sn[dt],
+                noise_sft=noise_sft[dt], # give noise SFT data in band
+                rng_med=rng_med[dt], # provide running median 
+                sftpath=sftpaths[dt])
+            
+            # calcualte the harmonic sum of median noise floors for calulation of depth
+            if self.h0 !=0:
+                self.harmonic_sum_Sn += det_data.median_Sn 
+            setattr(self, '{}'.format(dn), det_data)
+            #self.__setattr__("{}".format(dn),det_data)
+
+        if self.h0 != 0:
+            logging.info("Injecting Cw signal ....")
+            self.get_from_pyfstat(";".join(sftpaths))
+
+        logging.info("Normalising SFTs ....")
+        for dr in self.det_names:
+            getattr(self, dr).norm_rngmed(remove_sft=True, use_lal=False)
+
+        # depth of signal as mean of depths from each detector
+        if self.h0 == 0:
+            self.depth = np.inf
+        else:
+            self.depth = np.sqrt(1/self.harmonic_sum_Sn)/self.h0 
+
+
+
+    def __sim_data__(self,pulsar_path=None,tref=None,epochs=None,tstart=None,T=None,nsft=None,det='H1',antenna=True, rand=True,doppler=False,Sn=None,noise_sft=None, rng_med=None, sftpath=None):
+        """
+        Simulate data with pulsar signal
+        -----------
+        args
+        -----------
+        pulsar_path: array
+            indicies of the track the pulsar makes in frequency
+        tref: int
+            reference time for pulsar parameters, default tstart
+        epochs: array
+            array of times for each sft
+        tstart: float
+            start time in epoch time
+        T: int
+            length of time in number of sfts
+        nsft: float
+            number of sfts to make
+        det: string
+            which detector , 'H1','L1' etc
+        antenna: bool
+            True for antenna pattern, false for no antenna pattern
+        rand: bool
+            use random data or flat background with just signal
+        doppler: bool
+            turn on or off doppler modulation of signal
+        Sn: float or array
+            either a float for a fixed noise level, or array containing noise floor for each sft where gaps are NaN
+        noise_spect: 2d array
+            set the noise to inject signal 
+
+
+        ----
+        kwargs
+        ----
+        snr: float
+            snr of signal, if none uses h0 from params
+        ----------
+        returns
+        ----------
+        dict: 
+        {"spect_1","spect_2","freq_track_1","freq_track_2","fmin","fmax","h0","SNR_1","SNR_2","SSB_track_index","depth","freqs","tot_snr"}
+        """
+
+        # initialise the SFT
+        sft = SFT(tsft=self.tsft)
+
+        if rng_med is not None:
+            sft.rng_med = rng_med
+        #print("input minmaxf", self.fmin, self.fmax)
+        # define the parameters of the sft
+        #print("multipl", self.fmin*self.tsft, np.round(self.fmin*self.tsft), np.round(self.fmin*self.tsft).astype(int))
+        #print("multipl2", self.fmax*self.tsft, np.round(self.fmax*self.tsft), np.round(self.fmax*self.tsft).astype(int))
+        self.fmin = np.round(self.fmin*self.tsft).astype(int)/float(self.tsft) # min frequency
+        self.fmax = np.round(self.fmax*self.tsft).astype(int)/float(self.tsft) # max frequency
+        #print("round minmaxf", self.fmin, self.fmax)
+
+        self.nbins = np.round((self.fmax-self.fmin)*self.tsft).astype(int) # number of frequency bins
+        #print("nbins:", self.fmin, self.fmax, self.fmax-self.fmin, (self.fmax-self.fmin)*self.tsft, np.round((self.fmax-self.fmin)*self.tsft))
+        self.delta_f = 1./self.tsft # separation of bins in frequency
+        self.frequencies = np.arange(self.fmin,self.fmax,sft.delta_f)#[:-1] # bin centers for each bin
+
+        sft.fmin = self.fmin
+        sft.fmax = self.fmax
+        sft.frequencies = self.frequencies
+        sft.nbins = self.nbins
+        sft.delta_f = self.delta_f
+        sft.nsft = len(epochs)
+        sft.epochs = epochs
+
+        # id the noise if defined from real data, then use this
+        sft.sft = noise_sft#.astype("complex64")
+        nsft = len(noise_sft)
+
+        # set reference time as start of sft
+        if not tref:
+            self.tref = tstart
+        elif tref:
+            self.tref = tref
+
+
+        if self.snr == 0 or self.h0 == 0:
+            pass
+        else:
+            pass
+            #logging.info("Generating Cw signal ....")
+            #self.get_from_cwsimulator(sft)
+            #self.get_from_pyfstat(sft, det, sftpath)
+        logging.info("Normalising to running median")
+        
+
+        if self.h0 == 0:
+            sft.depth = np.inf
+            sft.median_Sn = np.nanmedian(Sn)
+        else:
+            # estimate the depth
+            sft.depth = np.sqrt(np.nanmedian(Sn))/self.h0
+            sft.median_Sn = np.nanmedian(Sn)
+        return sft
+    
+    
+    def sum_sfts(self,sum_type="norm_sft_power",gap_val = 2,nsfts=48):
+        '''
+        takes input sfts with tsft=1800s and returns sum of 48 sfts, i.e summing over a day
+        and returns fraction of real data in each sum.
+        args
+        -------
+        gap_val: double
+            value used when there are gaps in the data (for calculating fraction)
+        returns
+        -----------
+        data_av: array
+            data summed over every day
+        fraction: array
+            fraction of each day which contained real data
+        '''
+        for dt in self.det_names:
+            data = getattr(self,dt)
+            data.sum_sft(sum_type=sum_type,gap_val=gap_val,nsfts=nsfts,remove_original=False)
+
+    def downsamp_frequency(self,data_type="summed_norm_sft_power",stride = 2,remove_original=False):
+        '''
+        downsample the frequency by taking the mean of "stride" bins starting at base of band
+        args
+        -------
+        stride: double
+            number of frequency bins to take the mean of
+        '''
+        for dt in self.det_names:
+            data = getattr(self,dt)
+            data.downsamp_frequency(data_type=data_type,stride=stride,remove_original=remove_original)
+
+    def get_from_cwsimulator(self, sft):
+        """Add signal to data via cwsimulator package
+
+        Args:
+            sft (_type_): _description_
+        """
+        wf = self.waveform(self.h0, self.cosi, self.f[0], self.f[1])
+        S = simulateCW.CWSimulator(
+            self.tref, 
+            self.epochs[0], 
+            self.epochs[-1] - self.epochs[0], 
+            wf, 
+            self.dt_wf, 
+            self.phi0, 
+            self.psi, 
+            self.alpha, 
+            self.delta, 
+            det,
+            earth_ephem_file=self._parent.earth_ephem, 
+            sun_ephem_file=self._parent.sun_ephem)
+
+        logging.info("Injecting into SFTs")
+        det_snr = np.sqrt(np.nansum(self._parent.get_snr2(epochs=self.epochs,alpha=self.alpha,delta=self.delta,psi=self.psi,phi0=self.phi0,cosi=self.cosi, Sn=self.Sn[det],det=det,tsft=self.tsft, h0=self.h0, antenna=self.antenna_pattern)))
+        logging.info(f"snr {det} value: {det_snr}")
+        #sft.sft = np.zeros((len(epochs),self.nbins)).astype("complex")
+        for dat_i, i, N in S.get_sfts(fmin=self.fmin,fmax=self.fmax, Tsft=self.tsft, window="tukey", window_param=0.001):
+            # fill with data from specific frequency range based on SFT
+            # only if the noise floor is not nan, i.e. there is not a gap in the data
+            if ~np.isnan(self.Sn[det][i]):
+                sft.sft[i] += dat_i.data.data#[int(self.fmin*self.tsft):int(self.fmax*self.tsft)]
+
+    def get_from_pyfstat(self, sftpath):
+        """add signal to data via pyfstat (default used)
+
+        Args:
+            sft (_type_): _description_
+            det (_type_): _description_
+            sftpath (_type_): _description_
+        """
+        label = f"PyFstatExampleMCMCSearchUsingInitialisation"
+
+        outdir = os.path.join(f"PyFstat_temp_data_{self.fmin}", label)
+
+        logger = pyfstat.set_up_logger(label=label, outdir=outdir)
+
+        logging.info(f"sim f0: {self.f[0]}, f1: {self.f[1]}, fmin: {self.fmin}, fmax: {self.fmax}")
+
+        band_width = self.fmax - self.fmin
+        temp_fmin = np.round((self.fmin - 0.5*band_width)*self.tsft)/self.tsft
+        temp_fmax = np.round((self.fmax + 0.5*band_width)*self.tsft)/self.tsft
+        temp_band_width = temp_fmax - temp_fmin
+        # Properties of the GW data
+        data_parameters = {
+            "detectors": ",".join(self.det_names),
+            "timestamps": {det: self.epochs.astype("int") for det in self.det_names},
+        # "noiseSFTs":f"{hname};{lname}",
+            "Tsft":int(self.tsft),
+            "Band":temp_band_width
+        }
+
+        # Properties of the signal
+
+        logging.info(f"sim f0: {self.f[0]}, f1: {self.f[1]}, fmin: {temp_fmin}, fmax: {temp_fmax}")
+
+
+        signal_parameters = {
+            "F0": self.f[0],
+            "F1": self.f[1],
+            "F2": 0,
+            "Alpha": self.alpha,
+            "Delta": self.delta, 
+            "h0": self.h0,
+            "cosi": self.cosi,
+            "psi": self.psi,
+            "phi": self.phi0,
+            "tref": self.tref,
+        }
+
+        writer = pyfstat.Writer(
+            label=label, 
+            outdir=outdir, 
+            **data_parameters,
+            **signal_parameters,
+            earth_ephem=self._parent.earth_ephem,
+            sun_ephem=self._parent.sun_ephem
+        )
+        writer.fmin = temp_fmin
+
+        writer.make_data()
+
+        frequency, timestamps, amplitudes = pyfstat.utils.get_sft_as_arrays(writer.sftfilepath, fMin=np.round(self.fmin*self.tsft)/self.tsft, fMax=np.round(self.fmax*self.tsft)/self.tsft)
+
+        for det in self.det_names:
+            getattr(self, det).sft += amplitudes[det].T
+            #sft.sft += amplitudes[det].T

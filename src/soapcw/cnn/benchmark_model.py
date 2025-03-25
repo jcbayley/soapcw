@@ -5,6 +5,7 @@ import os
 import h5py
 import numpy as np
 from soapcw.cnn.pytorch import models
+import soapcw.cnn.train_model
 import argparse
 import time
 import matplotlib.pyplot as plt
@@ -111,7 +112,7 @@ def run_batch(model, optimiser, loss_fn, batch_data, batch_labels, model_type="s
         model.eval()
 
     if model_type in ["spectrogram", "vitmapspectrogram"]:
-        output = model(torch.Tensor(batch_data[0]).to(device))
+        output = model(torch.Tensor(batch_data).to(device))
         loss = loss_fn(output, batch_labels.to(device).to(torch.float32))
         if train:
             loss.backward()
@@ -192,10 +193,14 @@ def run_model(
 
 
     load_types = ["vit_imgs", "H_imgs", "L_imgs", "stats"]
-    test_dataset = LoadData(train_noise_dir, train_signal_dir, load_types=load_types)
+    print(f"Loading data from {train_noise_dir} and {train_signal_dir}")
+
+    test_data = soapcw.cnn.train_model.LoadData(train_noise_dir, train_signal_dir, load_types=load_types, shuffle=True, nfile_load=n_test)
+
+    test_dataset = torch.utils.data.DataLoader(test_data, batch_size=128, shuffle=True)
 
 
-    img_dim = np.array(test_dataset.get_image_size()[1:])[::-1]
+    img_dim = np.array(test_data.get_image_size()[1:])[::-1]
 
     if model_type == "spectrogram":
         #inchannels = 2
@@ -211,16 +216,17 @@ def run_model(
     else:
         raise Exception(f"Load type {model_type} not defined select from [spectrogram, vitmap, vit_imgs, vitmapspectrogram, vitmapspectstatgram]")
 
-    print("model")
-    #print(torchsummary.summary(model, (in_channels, img_dim[0], img_dim[1])))
+    #print("model")
+    print(torchsummary.summary(model, (in_channels, img_dim[0], img_dim[1])))
 
-    print("model loaded")
+    print("model created")
 
     optimiser = torch.optim.Adam(model.parameters(), lr = learning_rate)
     loss_fn = torch.nn.BCEWithLogitsLoss()
 
     
     load_model_fname = os.path.join(load_model, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt")
+    print(f"Loading model from {load_model_fname}") 
     checkpoint = torch.load(load_model_fname, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
     optimiser.load_state_dict(checkpoint["optimiser_state_dict"])
@@ -237,44 +243,34 @@ def run_model(
     with torch.no_grad():
         test_losses = []
         test_pars = {}
+        for pname in test_data.parkeys:
+                test_pars.setdefault(pname, [])
         test_labels = []
         test_statistic = []
         test_lineaware = []
         pnames = None
         print("Testing model ...")
-        for i, (noise_data, signal_data, pname_noise, pars_noise, pname_signal, pars_signal, truths_noise, truths_signal) in enumerate(test_dataset):
-            for pname in pname_signal:
-                test_pars.setdefault(pname.decode(), [])
+        for i, (batch_data, batch_labels, batch_pars) in enumerate(test_dataset):
  
-            tot_data = [torch.cat([torch.Tensor(noise_data[j]).squeeze(), torch.Tensor(signal_data[j]).squeeze()], dim=0) for j in range(test_dataset.n_load_types-1)]
+            #tot_data = [torch.cat([torch.Tensor(noise_data[j]).squeeze(), torch.Tensor(signal_data[j]).squeeze()], dim=0) for j in range(test_dataset.n_load_types-1)]
 
-            t_labels = torch.cat([truths_noise, truths_signal])
-            tot_labels = torch.nn.functional.one_hot(torch.Tensor(t_labels).to(torch.int32).long(), 2)
-            test_lineaware.append(np.concatenate([noise_data[-1], signal_data[-1]]))
-            vloss, stat = run_batch(model, optimiser, loss_fn, tot_data, tot_labels, train=False, device=device)   
-            for i,key in enumerate(pname_signal):
-                key=key.decode()
-                if key in [k.decode() for k in pname_noise]:
-                    index = np.where([k.decode() == key for k in pname_noise])[0][0]
-                    test_pars[key].extend(pars_noise[:,index])
-                else:
-                    test_pars[key].extend(np.repeat(np.nan, len(pars_noise)))
-              
-            for i,key in enumerate(pname_signal):
-                key=key.decode()
-                test_pars[key].extend(pars_signal[:,i])
+            #t_labels = torch.cat([truths_noise, truths_signal])
+            #tot_labels = torch.nn.functional.one_hot(torch.Tensor(t_labels).to(torch.int32).long(), 2)
+            test_lineaware.extend(batch_data[-1])
+            vloss, stat = run_batch(model, optimiser, loss_fn, batch_data[0], batch_labels, train=False, device=device)   
+            for i,key in enumerate(test_data.parkeys):
+                test_pars[key].extend(batch_pars[:,i])
 
-            test_labels.extend(tot_labels.cpu().numpy())
+            test_labels.extend(batch_labels.cpu().numpy())
             test_statistic.extend(stat.cpu().numpy())
-            if len(test_statistic) > n_test:
-                break
+            
 
         test_statistic = np.array(test_statistic)
         test_lineaware = np.array(test_lineaware).flatten()
         test_labels = np.array(test_labels)
-        print("CNN shape", np.shape(test_statistic))
-        print("Lineaware shape", np.shape(test_lineaware))
-        print("Labels shape", np.shape(test_labels))
+        #print("CNN shape", np.shape(test_statistic))
+        #print("Lineaware shape", np.shape(test_lineaware))
+        #print("Labels shape", np.shape(test_labels))
 
         line_snr_range, line_sensitivity = make_sensitivity_plot(
             np.array(test_lineaware).flatten(), 
@@ -398,7 +394,8 @@ def main():
     parser.add_argument("-fmin", "--fmin", help="low frequency", default=20, type=float)
     parser.add_argument("-fmax", "--fmax", help="high frequency", default=500, type=float)
     parser.add_argument("-ntest", "--ntest", help="n test data", default=100, type=int)
-    device = "cuda:0"
+    parser.add_argument("-d", "--device", help="device to run on", default="cuda:0")
+    #device = "cuda:0"
 
     try:                                                     
         args = parser.parse_args()  
@@ -430,7 +427,7 @@ def main():
                     avg_pool_size=cfg["cnn_model"]["avg_pool_size"],
                     bandtype = bandtype,
                     n_test = args.ntest,
-                    device=device,
+                    device=args.device,
                     load_model=cfg["output"]["cnn_model_directory"],
                     fmin=args.fmin,
                     fmax=args.fmax,

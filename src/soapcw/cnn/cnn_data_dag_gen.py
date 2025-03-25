@@ -66,8 +66,8 @@ def write_dagfile(config, datatype="train"):
 
     band_list = []
     for i, bs in enumerate(config["data"]["band_starts"]):
-        bandstart = np.arange(config["data"]["band_starts"][i], config["data"]["band_ends"][i], config["condor"]["cnn_data_load_size"] - 0.1)[:-1]
-        bandend = bandstart + config["condor"]["cnn_data_load_size"]
+        bandstart = np.arange(config["data"]["band_starts"][i], config["data"]["band_ends"][i], config["narrowband"]["band_width"] - 0.1)[:-1]
+        bandend = bandstart + config["narrowband"]["band_width"]
         bandwidths =  [config["data"]["band_widths"][i]] * len(bandstart)
         tlist = np.array([bandstart, bandend, bandwidths]).T
         band_list.append(tlist)
@@ -90,7 +90,7 @@ def write_dagfile(config, datatype="train"):
                 uid = seeds[i*j]
                 jobid = "{}_{}_{}".format(comment,i*j,uid)
                 job_string = "JOB {} {}\n".format(jobid,sub_filename)
-                retry_string = "RETRY {} 10\n".format(jobid)
+                retry_string = "RETRY {} 1\n".format(jobid)
                 vars_string = f'VARS {jobid} bandstart="{sband[0]}" bandend="{sband[1]}" bandwidth="{sband[2]}"\n'
                 f.write(job_string)
                 f.write(retry_string)

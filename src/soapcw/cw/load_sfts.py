@@ -39,7 +39,7 @@ class LoadSFT:
             list of detector names (only necessary when using np.ndarray as input to sftpath)
         """
         self.verbose = verbose
-
+        self.sftpaths = sftpath
         if type(sftpath) is str:
             # load the sft
             self.get_sft(sftpath,fmin=fmin,fmax=fmax,tmin=tmin,tmax=tmax)
@@ -146,14 +146,14 @@ class LoadSFT:
         if len(set(nbins)) > 1:
             print("Warning: different detectors do not have the same number of frequency bins")
         
-        for det in sfts.data:
+        for i, det in enumerate(sfts.data):
             # get detectors name
             detname = det.data[0].name
             self.det_names.append(detname)
 
             # initialise SFT for detector
             data = SFT()
-
+            data.sftpath = self.sftpaths.split(";")[i]
             # set parameters of sft
             data.nsft = det.length
             data.nbins = det.data[0].data.length
@@ -282,25 +282,7 @@ class LoadSFT:
             # get sft for detector
             sfts = getattr(self,det)
             
-            # create empty vectors for sft and normalised power
-            sig2 = lal.CreateREAL8FrequencySeries(None,0,0,1./sfts.tsft,lal.SecondUnit,sfts.nbins)
-            c_sft = lal.CreateCOMPLEX8FrequencySeries(None,0,0,1./sfts.tsft,lal.SecondUnit,sfts.nbins)
-            sfts.norm_sft_power = np.zeros((sfts.nsft,sfts.nbins))
-
-            if save_rngmed:
-                sfts.rng_med = np.zeros((sfts.nsft,sfts.nbins))
-
-            for i,sft in enumerate(sfts.sft):
-                # fill sig2 structure with running medians 
-                c_sft.data.data = sft.astype('complex64')
-                lalpulsar.SFTtoRngmed(sig2,c_sft,med_width)
-                if save_rngmed:
-                    sfts.rng_med[i,:] = sig2.data.data
-                # fill likleyhood arrays with sft data normalised to running median (multiplied by two to be chi2 distribution)
-                sfts.norm_sft_power[i,:] = 2*np.abs(c_sft.data.data/np.sqrt(sig2.data.data))**2
-
-            if remove_sft:
-                del sfts.sft
+            sfts.norm_rngmed(med_width=med_width,remove_sft = remove_sft, save_rngmed=save_rngmed)
 
         if self.verbose:
             print("Normalise SFTs time: ", time.time() - start_time)
