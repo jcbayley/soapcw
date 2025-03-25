@@ -99,6 +99,7 @@ soapcw-cnn-make-data-dag = "soapcw.cnn.cnn_data_dag_gen:main"
 soapcw-cnn-make-data = "soapcw.cnn.cnn_data_gen:main"
 soapcw-cnn-train-model = "soapcw.cnn.train_model:main"
 soapcw-narrowband-sfts = "soapcw.cnn.narrowband_sfts:main"
+soapcw-make-line-aware-statistics = "soapcw.line_aware_stat.save_lookup:main"
 
 
 

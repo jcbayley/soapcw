@@ -169,6 +169,81 @@ class SFT:
                 psds.append(shm*2.0/self.tsft)
 
         return np.array(psds)
+
+    def norm_rngmed(self,med_width=100,remove_sft = False, save_rngmed=False, use_lal=True):
+        """
+        normalise the SFT to the running median and save the output power
+        args
+        ---------------
+        med_width: int (optional)
+            number of bins to use for running median, default 100
+        remove_sft: bool
+            remove the original complex sfts save only the normalised power, default false
+        save_rngmed: bool
+            save the running median to use as noise floor later, default false
+        """
+            
+        if not hasattr(self,"rng_med"):
+            if use_lal:
+                # create empty vectors for sft and normalised power
+                sig2 = lal.CreateREAL8FrequencySeries(None,0,0,1./self.tsft,lal.SecondUnit,self.nbins)
+                c_sft = lal.CreateCOMPLEX8FrequencySeries(None,0,0,1./self.tsft,lal.SecondUnit,self.nbins)
+                self.norm_sft_power = np.zeros((self.nsft,self.nbins))
+
+                if save_rngmed:
+                    self.rng_med = np.zeros((self.nsft,self.nbins))
+
+                for i,sft in enumerate(self.sft):
+                    # fill sig2 structure with running medians 
+                    c_sft.data.data = sft.astype('complex64')
+                    lalpulsar.SFTtoRngmed(sig2,c_sft,med_width)
+                    if save_rngmed:
+                        self.rng_med[i,:] = sig2.data.data
+                    # fill likleyhood arrays with sft data normalised to running median (multiplied by two to be chi2 distribution)
+                    self.norm_sft_power[i,:] = 2*np.abs(c_sft.data.data/np.sqrt(sig2.data.data))**2
+            else:
+                running_median = self.compute_running_median(med_width)
+                self.norm_sft_power = 2*np.abs(self.sft/np.sqrt(running_median))**2
+        else:
+            self.norm_sft_power = 2*np.abs(self.sft/np.sqrt(self.rng_med))**2
+            self.norm_sft_power[np.isnan(self.norm_sft_power)] = 2.0
+
+        if remove_sft:
+            del self.sft
+
+    def compute_running_median(self, window_width):
+        """
+        Compute the running median of the self.sft along the frequency axis.
+        
+        Parameters
+        -------------
+        window_width: int
+            the width of the running median window in sample points
+        
+        Returns
+        ------------------
+        running_median: array
+            the running median of the sft with the chosen window size
+        """
+        if self.sft is None:
+            raise ValueError("SFT data is not available.")
+        
+        Nt, Nf = self.sft.shape
+        periodogram = np.abs(self.sft)**2
+        running_median = np.zeros_like(periodogram)
+        half_window = window_width // 2
+        
+        def sliding_window(arr, window_size):
+            shape = arr.shape[:-1] + (arr.shape[-1] - window_size + 1, window_size)
+            strides = arr.strides + (arr.strides[-1],)
+            return np.lib.stride_tricks.as_strided(arr, shape=shape, strides=strides)
+
+        for t in range(Nt):
+            padded_sft = np.pad(periodogram[t], (half_window, half_window-1), mode='edge')
+            sliding_windows = sliding_window(padded_sft, window_width)
+            running_median[t] = np.apply_along_axis(np.nanmedian, 1, sliding_windows)
+        
+        return running_median
     
     def write_sft_files(self, output_path, narrowband = False, fmin = None, fmax = None):
         """

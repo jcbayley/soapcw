@@ -8,6 +8,8 @@ from soapcw.cnn.pytorch import models
 import argparse
 import time
 import matplotlib.pyplot as plt
+import pandas as pd
+import logging
 
 class LoadDataOld(torch.utils.data.Dataset):
 
@@ -237,7 +239,8 @@ class LoadDataOld(torch.utils.data.Dataset):
 class LoadData(torch.utils.data.Dataset):
 
     def __init__(self, noise_load_directory, signal_load_directory, load_types = ["stats", "vit_imgs", "H_imgs", "L_imgs"], 
-                shuffle=True, nfile_load="all", snr_min=None, snr_max=None, return_parameters=False, n_load_files=1, batch_size=128):
+                shuffle=True, nfile_load="all", snr_min=None, snr_max=None, return_parameters=False, n_load_files=1, 
+                batch_size=128, sort_filenames=False, hwinj_file=None):
         self.load_types = load_types
         self.noise_load_directory = noise_load_directory
         self.signal_load_directory = signal_load_directory
@@ -252,6 +255,16 @@ class LoadData(torch.utils.data.Dataset):
         self.all_truths = []
         self.n_data_in_load = 0
         self.total_n_data = 0
+        self.parkeys = ['fmin', 'fmax', 'width', 'av_sh', 'tref','snr', 'h0', 'depth', 'f', 'fd', 'alpha', 'sindelta', 'phi0', 'psi', 'cosi']
+        self.sort_filenames = sort_filenames
+
+        if hwinj_file is not None:
+            self.hardware_injections = pd.read_html(hwinj_file, header=0)[0]
+        else:
+            self.hardware_injections = None
+
+        if self.sort_filenames and self.shuffle:
+            raise Exception("Cannot sort and shuffle filenames, please select one or the other")
         
 
 
@@ -264,6 +277,8 @@ class LoadData(torch.utils.data.Dataset):
 
         self.get_filenames()
         self.load_files_to_data()
+
+        
 
 
 
@@ -286,6 +301,7 @@ class LoadData(torch.utils.data.Dataset):
 
         #all_data, all_truths = [self.all_data[i][data_index:data_index+self.batch_size] for i in range(self.n_load_types)], self.all_truths[data_index:data_index+self.batch_size]
         all_data, all_truths = [self.all_data[i][idx] for i in range(self.n_load_types)], self.all_truths[idx]
+        all_pars = self.all_pars[idx]
 
 
         #if self.shuffle:
@@ -295,7 +311,7 @@ class LoadData(torch.utils.data.Dataset):
         #    all_data = [all_data[i][shuffle_inds] for i in range(len(all_data))]
             #pars = np.array(pars)[shuffle_inds]
 
-        return all_data, all_truths
+        return all_data, all_truths, all_pars
 
 
     def load_files_to_data(self):
@@ -306,9 +322,10 @@ class LoadData(torch.utils.data.Dataset):
         all_truths = []
         all_pars = []
         for i in range(len(self.noise_filenames)):
-            noise_data, noise_pars, pname = self.load_file(self.noise_filenames[i], noise_only = True)
-            signal_data, signal_pars, pname = self.load_file(self.signal_filenames[i]) 
-            pars = list(noise_pars) + list(signal_pars)
+            print("Loading: ", self.noise_filenames[i], self.signal_filenames[i])
+            noise_data, noise_pars = self.load_file(self.noise_filenames[i], noise_only = True)
+            signal_data, signal_pars = self.load_file(self.signal_filenames[i]) 
+            pars = torch.cat([torch.Tensor(noise_pars), torch.Tensor(signal_pars)], dim=0)
 
             tot_data = [torch.cat([torch.Tensor(noise_data[i]).squeeze(), torch.Tensor(signal_data[i]).squeeze()], dim=0) for i in range(self.n_load_types)]
 
@@ -322,14 +339,12 @@ class LoadData(torch.utils.data.Dataset):
         
         self.all_data = [torch.cat([all_data[i][j] for i in range(len(self.noise_filenames))], dim=0) for j in range(self.n_load_types)]
         self.all_truths = torch.cat(all_truths, dim=0)
+        self.all_pars = torch.cat(all_pars, dim=0)
         self.n_data_in_load = self.all_truths.shape[0]
         self.total_n_data = self.n_data_in_load
 
         print("shapes:", len(self.all_data), self.all_data[0].shape, self.all_truths.shape)
 
-        
-        
-        
         #return all_data, all_truths, all_pars
 
     def load_file(self, fname, noise_only = False):
@@ -345,8 +360,9 @@ class LoadData(torch.utils.data.Dataset):
             output_data = []
             imgdone = False
             # enforce snr limits
-            pars = np.array(f["pars"])
+            #pars = np.array(f["pars"])
             parnames = [pn.decode() for pn in list(f["parnames"])]
+            pars = np.array([np.array(f["pars"])[:, parnames.index(pk)] for pk in self.parkeys]).T
 
             for data_type in self.load_types:
                 if data_type in ["H_imgs", "L_imgs", "vit_imgs"]:
@@ -366,7 +382,17 @@ class LoadData(torch.utils.data.Dataset):
             output_data = [output_data[i][np.logical_and(snrs >= self.snr_min, snrs <= self.snr_max)] for i in range(len(output_data))]
             pars = pars[np.logical_and(snrs >= self.snr_min, snrs <= self.snr_max)]
 
-        return output_data, pars, parnames
+
+        if self.hardware_injections is not None:
+            for _, hinj in self.hardware_injections.iterrows():
+                #logging.info(hinj["f0 (epoch start)"])
+                #logging.info(pars[:, parnames.index("fmin")])
+                inband = np.logical_and(pars[:, parnames.index("fmin")] <= hinj["f0 (epoch start)"], pars[:, parnames.index("fmax")] >= hinj["f0 (epoch start)"])
+                pars = pars[~inband]
+                output_data = [output_data[i][~inband] for i in range(len(output_data))]
+
+
+        return output_data, pars
 
     def shuffle_filenames(self):
         np.random.shuffle(self.noise_filenames)
@@ -379,6 +405,11 @@ class LoadData(torch.utils.data.Dataset):
 
         if self.shuffle:
             self.shuffle_filenames()
+        elif self.sort_filenames:
+            self.noise_filenames = sorted(self.noise_filenames, key = lambda a: float(a.split("_")[-3]))
+            self.signal_filenames = sorted(self.signal_filenames, key = lambda a: float(a.split("_")[-3]))
+        else:
+            pass
 
         if self.nfile_load != "all":
             self.noise_filenames = self.noise_filenames[:self.nfile_load]
@@ -482,7 +513,8 @@ def train_model(
     overwrite=False,
     train_snr_min = None,
     train_snr_max = None,
-    n_updates_per_batch=1
+    n_updates_per_batch=1,
+    hwinj_file=None
     ):
     """_summary_
 
@@ -516,12 +548,12 @@ def train_model(
     train_noise_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
     train_signal_dir = os.path.join(load_dir, "train", bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
 
-    val_noise_dir = os.path.join(load_dir, "validation", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
-    val_signal_dir = os.path.join(load_dir, "validation", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
+    val_noise_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", "snr_0.0_0.0")
+    val_signal_dir = os.path.join(load_dir, "train", other_bandtype, f"band_{fmin:.1f}_{fmax:.1f}", f"snr_{float(snrmin):.1f}_{float(snrmax):.1f}")
 
     model_fname = os.path.join(save_dir, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt")
 
-    if os.path.ifile(model_fname) and not overwrite and not continue_train:
+    if os.path.isfile(model_fname) and not overwrite and not continue_train:
         raise Exception(f"Model file {model_fname} already exists, set overwrite=True to overwrite or continue_train=True to continue training")
 
     if verbose:
@@ -552,7 +584,9 @@ def train_model(
         train_signal_dir, 
         load_types=load_types,
         snr_min = train_snr_min,
-        snr_max = train_snr_max)
+        snr_max = train_snr_max,
+        hwinj_file=hwinj_file)
+
 
 
     validation_dataset_1 = LoadData(
@@ -561,7 +595,8 @@ def train_model(
         load_types=load_types, 
         nfile_load=2,
         snr_min = train_snr_min,
-        snr_max = train_snr_max)
+        snr_max = train_snr_max,
+        hwinj_file=hwinj_file)
 
     train_dataset = torch.utils.data.DataLoader(train_dataset_1, batch_size=128, shuffle=True)
     validation_dataset = torch.utils.data.DataLoader(validation_dataset_1, batch_size=64, shuffle=False)
@@ -639,7 +674,7 @@ def train_model(
         batch_times = [time.time()]
         batch_number = 0
         loss = 0
-        for batch_data, batch_labels in train_dataset:
+        for batch_data, batch_labels, batch_pars in train_dataset:
             bt_start = batch_times[-1]
             if verbose:
                 print(f"Batch {batch_number}, mean_batch_time: {np.mean(mean_batch_time[1:])}, loss: {loss}")
@@ -669,7 +704,7 @@ def train_model(
         
         with torch.no_grad():
             val_losses = []
-            for i, (batch_data, batch_labels) in enumerate(validation_dataset):
+            for i, (batch_data, batch_labels, batch_pars) in enumerate(validation_dataset):
                 if n_train_multi_size not in [None, "none"]:
                     vloss = train_multi_batch(model, optimiser, loss_fn, batch_data, batch_labels, train=False, device=device, n_train_multi_size=n_train_multi_size)
                 else:
@@ -750,7 +785,7 @@ def main():
         bandtypes = cfg["cnn_model"]["band_types"]
 
     if args.continue_train and args.load_model is not None:
-        raise Exception("Must provide a model path directory (--load-model) or continue training from default checkpoint (--continue-train)")
+        raise Exception("Must provide one of model path directory (--load-model) or continue training from default checkpoint (--continue-train), not both")
     elif args.continue_train and args.load_model is None:
         print("-------------------------")
         print("continuing from previous checkpoint")
@@ -793,7 +828,8 @@ def main():
                     train_snr_max=cfg.get("cnn_model", "train_snr_max"),
                     train_snr_min=cfg.get("cnn_model", "train_snr_min"),
                     verbose=args.verbose,
-                    n_updates_per_batch=args.n_updates_per_batch
+                    n_updates_per_batch=args.n_updates_per_batch,
+                    hwinj_file = cfg.get("input", "hardware_injections")
                     )
 
 

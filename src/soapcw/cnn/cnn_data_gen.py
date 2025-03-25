@@ -20,6 +20,11 @@ from soapcw.cnn import generate_train_data
 from soapcw.cnn import generate_test_data
 #import mdc_test
 from soapcw.cnn import generate_gaussian_train_data
+import logging
+
+logging.basicConfig(level=logging.INFO, 
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S') 
 
 
 def find_sft_file(indir,bandmin,bandmax):
@@ -125,6 +130,7 @@ def return_outputs(
         # run soap search using the two detector line aware statistic (one detector in gaps)
 
         if config["lookuptable"]["lookup_type"] == "power":
+            logging.info("Running SOAP with power lookups")
             viterbi = soapcw.two_detector(tr,datah,datal,lookup_table_2det=lookup_2,lookup_table_1det=lookup_1)
         else:
             raise Exception("Only power lookups currently supported")
@@ -139,6 +145,7 @@ def return_outputs(
 
     # summed stat
     if "sum_stats" in save_options:
+        logging.info("Running SOAP with power only")
         sum_viterbi = soapcw.two_detector(tr,datah,datal)
     
     if inj_track is not None and "diffs" in save_options:
@@ -153,6 +160,7 @@ def return_outputs(
 
     #create the figure showing SFTs and tracks
     if "plots" in save_options:
+        logging.info("Making figure")
         plotfig = make_figure(fmin,fmax,epochs[0],epochs[-1],datah,datal,[viterbi.vit_track1,viterbi.vit_track2],powers,vit_data,1800.,plot_track=True)
 
     # create the appropriate save directories
@@ -170,7 +178,7 @@ def return_outputs(
         
     # resize the normalised SFTs and the viterbi maps using skimages resize function which interpolates (also option for maxpooling)
     if config["cnn_data"]["resize_image"] not in [None, "none", False, "false"]:
-        print(config["cnn_data"]["resize_image"])
+        logging.info("Resizing images")
             
         # viterbi map resize
         vit_resize      = resize(vit_data, size, anti_aliasing=True)
@@ -379,7 +387,6 @@ def main():
         elif args.data_type in ["train", "validation"]:
             save_dir = os.path.join(config["output"]["cnn_train_data_save_dir"], args.data_type)
 
-            print("runtype", args.run_type)
             if args.run_type == "gaussian" or args.run_type == "gauss":
                 generate_gaussian_train_data.loop_band_train_augment(
                     config, 

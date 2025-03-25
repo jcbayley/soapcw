@@ -7,8 +7,13 @@ import datetime
 import copy
 import pickle
 import h5py
+import logging
 
-def roll_in_time(indata,numbins = 100,sh=None):
+logging.basicConfig(level=logging.INFO, 
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S') 
+
+def roll_in_time(indata,numbins = 100,sh=None, rng_med=None, use_complex=True):
     """Roll the data in time by a given number of bins, preserving the location of the gaps
 
     Args:
@@ -27,19 +32,28 @@ def roll_in_time(indata,numbins = 100,sh=None):
         sh_rolled = np.roll(sh[sfts_index].T,numbins).T
         sh_new = np.ones(len(sh))*np.nan
     
-    data = np.ones(np.shape(indata))*2
+    if rng_med is not None:
+        rng_med_rolled = np.roll(rng_med[sfts_index].T,numbins).T
+        rng_med_new = np.ones(np.shape(rng_med))*np.nan
     
+    if use_complex:
+        data = np.ones(np.shape(indata)).astype("complex")*2
+    else:
+        data = np.ones(np.shape(indata))*2
+
     for i,j in enumerate(sfts_index):
         data[j,:] = sfts_vals_rolled[i]
         if sh is not None:
             sh_new[j] = sh_rolled[i]
+        if rng_med is not None:
+            rng_med_new[j] = rng_med_rolled[i]
         
-    if sh is not None:
-        return data, sh_new
+    if sh is not None and rng_med is not None:
+        return data, sh_new, rng_med_new
     else:
         return data
         
-def flip_data_time(indata,sh = None):
+def flip_data_time(indata,sh = None, rng_med=None, use_complex=True):
     """Flip the data in time preserving the location of the gaps
 
     Args:
@@ -53,19 +67,28 @@ def flip_data_time(indata,sh = None):
     
     sfts_vals_reverse = indata[sfts_index][::-1]
     
-    data = np.ones(np.shape(indata))*2
-    
+    if use_complex:
+        data = np.ones(np.shape(indata)).astype("complex")*2
+    else:
+        data = np.ones(np.shape(indata))*2
+
     if sh is not None:
         sh_reverse = sh[sfts_index][::-1]
         sh_new = np.ones(len(sh))*np.nan
+
+    if rng_med is not None:
+        rng_med_reverse = rng_med[sfts_index][::-1]
+        rng_med_new = np.ones(np.shape(rng_med))*np.nan
     
     for i,j in enumerate(sfts_index):
         data[j,:] = sfts_vals_reverse[i]
         if sh is not None:
             sh_new[j] = sh_reverse[i]
+        if rng_med is not None:
+            rng_med_new[j] = rng_med_reverse[i]
         
-    if sh is not None:
-        return data, sh_new
+    if sh is not None and rng_med is not None:
+        return data, sh_new, rng_med_new
     else:
         return data
 
@@ -115,23 +138,22 @@ def loop_band_train_augment(
             stride = config["data"]["strides"][i]
             degfree = int(2 * config["data"]["n_summed_sfts"] * stride)
             width = config["data"]["band_widths"][i]
-            nbin = 180#int(width*tsft)
-            plotcut = stride * nbin
+            nbin = int(width*tsft)
+            plotcut = nbin
             brange = f"band_{int(minband):.1f}_{int(maxband):.1f}"
             break
         else:
             continue
 
-    print(f"bandmin: {bandmin}, bandmax: {bandmax}, width: {width}, stride: {stride}, degfree: {degfree}, brange: {brange}")
+    #print(f"bandmin: {bandmin}, bandmax: {bandmax}, width: {width}, stride: {stride}, degfree: {degfree}, brange: {brange}")
 
     # in 2Hz band set frequencies and indicies with 0.1 Hz bands not overlapping
     range_bands = np.round(np.arange(bandmin,bandmax-width,width),1)
-    range_index = np.arange(0,(bandmax-width-bandmin)*int(tsft),nbin*stride).astype(int)    
+    range_index = np.arange(0,(bandmax-width-bandmin)*int(tsft),nbin).astype(int)    
     
     # set which bands are odd and even with and ondex of 1 or 0
     odd_even = np.zeros(len(range_bands))
     odd_even[1::2] = 1
-
 
     bl,be = bandmin,bandmax
 
@@ -153,10 +175,9 @@ def loop_band_train_augment(
     hname,lname = cnn_data_gen.find_sft_file(config["narrowband"]["narrowband_sft_dir"],bandmin,bandmax)
     
     # load in the narrowbanded sfts, normalise them, fill in the gaps and save the running median
-    print(f"Loading SFTs ... {hname} {lname}")
-    sfts = cw.LoadSFT("{};{}".format(hname,lname),norm=True,filled=True,vetolist = vetolist,save_rngmed=True, tmin=tmin,tmax=tmax)
+    logging.info(f"Loading SFTs ... {hname} {lname} in times {tmin} - {tmax}")
+    sfts = cw.LoadSFT("{};{}".format(hname,lname),norm=True,filled=True,vetolist = vetolist,save_rngmed=True, tmin=tmin,tmax=tmax, remove_sft=False)
 
-    print("SFTs Loaded")
 
     if config["lookuptable"]["lookup_type"] == "amplitude":
         amp="amp"
@@ -190,7 +211,7 @@ def loop_band_train_augment(
 
     skip_list = []#config["data"]["hardware_injections"]
 
-    print(f"iterating over Nbands: {len(range_bands)}")
+    logging.info(f"iterating over Nbands: {len(range_bands)}")
     # main loop over all sub bands
     for i in range(len(range_bands)):
         
@@ -212,7 +233,7 @@ def loop_band_train_augment(
 
         #snr_start,snr_end = 80,150
         ms = int(range_index[i])
-        me = int(ms+nbin*stride)
+        me = int(ms+nbin)
         # put odd bands into one folder and even bands into another folder
         if odd_even[i] == 1:
             #outpath = os.path.join(path,"odd")
@@ -222,26 +243,31 @@ def loop_band_train_augment(
             split = "even"
             
         # shift data up and down in frequency by n bins  
-        shifts = [ns_bin*stride for ns_bin in config["cnn_data"]["shift_bins"]]  
+        shifts = [ns_bin for ns_bin in config["cnn_data"]["shift_bins"]]  
         #shifts = [ms,ms + 30*stride,ms - 30*stride,ms + 60*stride, ms - 60*stride]
 
         # loop over all of the augmentation shifts
         for shft in shifts:
             #set band as index plut 180 bins i.e. 0.1 Hz
+            
             cts = ms + shft
-            cte = int(cts + 180*stride)
+            cte = int(cts + nbin)
+            #print(split, ms, shft, cts, cte, sfts.H1.nbins, k+shft/tsft, k, shft/tsft)
             if cts < 0 or cte >= sfts.H1.nbins:
+                logging.info("Error index outside of bin range ................")
                 continue
             
             # get the median of the running medians as an estimate of the noise floow in this band.
             av_sh = [(2/tsft)*np.nanmedian(sfts.H1.rng_med[:,cts:cte],axis=1),(2/tsft)*np.nanmedian(sfts.L1.rng_med[:,cts:cte],axis=1)]
                 
             # set lower frequency
-            flow = k + cts / tsft
+            flow = k + shft / tsft
             
             # amke copy of data so dont overwrite sft
-            datah = copy.deepcopy(sfts.H1.norm_sft_power[:,cts:cte])
-            datal = copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte])
+            datah = copy.deepcopy(sfts.H1.sft[:,cts:cte])
+            datal = copy.deepcopy(sfts.L1.sft[:,cts:cte])
+            rng_med = {"H1":copy.deepcopy(sfts.H1.rng_med[:,cts:cte]), 
+                        "L1":copy.deepcopy(sfts.L1.rng_med[:,cts:cte])}
             
             # run injections function with new data, this saves noise iamge and injects signal and saves signal images
             noise_outs1, signal_outs1 = run_and_inj(
@@ -250,51 +276,61 @@ def loop_band_train_augment(
                 gen_noise_only_bands=gen_noise_only_bands,
                 save_options=  save_options, stride = stride, 
                 degfree = degfree, brange = brange, sfts=sfts,
+                rng_med=rng_med
                 )
             
             del datah, datal
             
             # flip data in time
         
-            datah,shH = flip_data_time(copy.deepcopy(sfts.H1.norm_sft_power[:,cts:cte]),sh=av_sh[0])
-            datal,shL = flip_data_time(copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte]),sh=av_sh[1])
-            
+            datah,shH,rngH = flip_data_time(
+                copy.deepcopy(sfts.H1.sft[:,cts:cte]),
+                sh=av_sh[0],
+                rng_med=copy.deepcopy(sfts.H1.rng_med[:,cts:cte]))
+            datal,shL,rngL = flip_data_time(
+                copy.deepcopy(sfts.L1.sft[:,cts:cte]),
+                sh=av_sh[1],
+                rng_med=copy.deepcopy(sfts.L1.rng_med[:,cts:cte]))
+
             noise_outs2, signal_outs2 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
                 gen_noise_only_bands=gen_noise_only_bands,
                 save_options=save_options, stride = stride, 
                 degfree = degfree, brange = brange,sfts=sfts,
+                rng_med={"H1":rngH, "L1":rngL}
                 )
         
             del datah,datal
         
             # flip data in freq
         
-            datah = flip_data_freq(copy.deepcopy(sfts.H1.norm_sft_power[:,cts:cte]))
-            datal = flip_data_freq(copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte]))
-        
+            datah = flip_data_freq(copy.deepcopy(sfts.H1.sft[:,cts:cte]))
+            datal = flip_data_freq(copy.deepcopy(sfts.L1.sft[:,cts:cte]))
+            rng_H = flip_data_freq(copy.deepcopy(sfts.H1.rng_med[:,cts:cte]))
+            rng_L = flip_data_freq(copy.deepcopy(sfts.L1.rng_med[:,cts:cte]))
             noise_outs3, signal_outs3 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,
                 gen_noise_only_bands=gen_noise_only_bands,
                 save_options=save_options, stride = stride, 
                 degfree = degfree, brange = brange,sfts=sfts,
+                rng_med={"H1":rng_H, "L1":rng_L}
                 )
             
             del datah,datal
             
             # roll data in time by 100 bins
         
-            datah,shH = roll_in_time(copy.deepcopy(sfts.H1.norm_sft_power[:,cts:cte]),numbins=100,sh=av_sh[0])
-            datal,shL = roll_in_time(copy.deepcopy(sfts.L1.norm_sft_power[:,cts:cte]),numbins=100,sh=av_sh[1])
-        
+            datah,shH, rngH = roll_in_time(copy.deepcopy(sfts.H1.sft[:,cts:cte]),numbins=100,sh=av_sh[0],rng_med=copy.deepcopy(sfts.H1.rng_med[:,cts:cte]))
+            datal,shL, rngL = roll_in_time(copy.deepcopy(sfts.L1.sft[:,cts:cte]),numbins=100,sh=av_sh[1],rng_med=copy.deepcopy(sfts.L1.rng_med[:,cts:cte]))
             noise_outs4, signal_outs4 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
                 gen_noise_only_bands=gen_noise_only_bands,
                 save_options=save_options, stride = stride, 
                 degfree = degfree, brange = brange,sfts=sfts,
+                rng_med={"H1":rngH, "L1":rngL}
                 )
             
             del datah,datal
@@ -308,9 +344,10 @@ def loop_band_train_augment(
                     odd_signal_save_outs[key].extend([signal_outs1[key],signal_outs2[key],signal_outs3[key],signal_outs4[key]])
                 else:
                     raise Exception("split not even or odd")
+            
+        
 
-
-    print("saving data to file .......")
+    logging.info("saving data to file .......")
 
 
     even_noise_filenames = os.path.join(*[path,"even",brange,noise_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
@@ -322,16 +359,19 @@ def loop_band_train_augment(
         if not os.path.isdir(os.path.dirname(fname)):
             os.makedirs(os.path.dirname(fname))
        # print(fname, save_options)
+        parkeys = ['fmin', 'fmax', 'width', 'av_sh', 'tref','snr', 'h0', 'depth', 'f', 'fd', 'alpha', 'sindelta', 'phi0', 'psi', 'cosi']
         with h5py.File(fname,"w") as f:
             for key in save_options:
                 if key == "pars":
                     # pars are stored as a dictionary so have to be saved differently to hdf5
+                    """
                     try:
                         parkeys = list(temp_data[key][0].keys())
                     except:
                         print(np.shape(temp_data))
                         print("temp_datakeys", temp_data[key][0])
                         raise Exception(f"temp data has no data: {fname}")
+                    """
                     f.create_dataset("parnames", data = parkeys)
                     f.create_dataset("pars", data = np.array([[td[key] for key in parkeys] for td in temp_data[key]]))
                 else:
@@ -378,7 +418,7 @@ def loop_band_train_augment(
 
 
 
-def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen_noise_only_bands=False, save_options = None, stride = 1,degfree = 96, brange = "", sfts = None):
+def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen_noise_only_bands=False, save_options = None, stride = 1,degfree = 96, brange = "", sfts = None, rng_med=None):
     """_summary_
 
     Args:
@@ -406,6 +446,7 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
 
     if av_sh is not None:
         Sn = {"H1":av_sh[0],"L1":av_sh[1]}
+    #rng_med = {"H1":None, "L1":None}
     # hardcoded start times as nsft
     nsft, tstart, tsft, flow, fhigh = sfts.H1.nsft, sfts.H1.epochs[0], 1800., fmin,fmin+width
     fmax = fmin + width
@@ -435,7 +476,8 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         #use real data
         data = sig.get_spectrogram(
             tstart = tstart, nsft = len(datah),tref=tstart,tsft=tsft,
-            fmin=fmin,fmax=fmax,snr=0,noise_spect={"H1":datah,"L1":datal}
+            fmin=fmin,fmax=fmax,snr=0,noise_sft={"H1":datah,"L1":datal}, real_data=True,
+            rng_med = rng_med, sftpaths={"H1":sfts.H1.sftpath,"L1":sfts.L1.sftpath}
             )
 
         data.sum_sfts()
@@ -444,14 +486,15 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         noise_outputs = cnn_data_gen.return_outputs(
             config,
             out_snr=out_snr_noise,
-            datah=data.H1.downsamp_summed_norm_sft_power,
-            datal=data.L1.downsamp_summed_norm_sft_power, 
+            datah=copy.deepcopy(data.H1.downsamp_summed_norm_sft_power),
+            datal=copy.deepcopy(data.L1.downsamp_summed_norm_sft_power), 
             fmin=fmin,fmax=fmax,snr=0,depth=0,h0=0, 
             resize_image=resize_image, 
             save_options = save_options, 
             epochs = data.H1.summed_epochs, 
             degfree = degfree
             )
+
         noise_outputs["pars"] = {"snr":0}
         noise_outputs["pars"]["tref"] = tstart
         noise_outputs["pars"]["snr"] = 0
@@ -464,6 +507,8 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         param_list = ["f","fd","alpha","sindelta","phi0","psi","cosi"]
         for param in param_list:
             noise_outputs["pars"][param] = np.nan
+    else:
+        noise_outputs = None
     # inject signal into band
 
     sig = cw.GenerateSignal()
@@ -532,9 +577,14 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         fmin=flow,
         fmax=fhigh,
         snr=snr,
-        noise_spect={"H1":datah,"L1":datal})
+        noise_sft={"H1":datah,"L1":datal},
+        real_data=True,
+        rng_med=rng_med,
+        sftpaths={"H1":sfts.H1.sftpath,"L1":sfts.L1.sftpath})
 
+    logging.info("Summing SFTs ...")
     data.sum_sfts()
+    logging.info("Downsampling SFTs ...")
     data.downsamp_frequency(stride=stride,data_type="summed_norm_sft_power",remove_original=False)
 
     epochs = data.H1.summed_epochs
@@ -550,13 +600,15 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
     pars["depth"] = data.depth
     pars["fmin"] = fmin
     pars["fmax"] = fmax
+    pars["width"] = width
 
     out_snr_inj = "snr_{}_{}".format(snrstart,snrend)
+    logging.info(f"f0: {pars['f']}, fmin: {fmin}, fmax: {fmax}, snr: {snr}")
     signal_outs = cnn_data_gen.return_outputs(
         config, 
         out_snr=out_snr_inj,
-        datah=data.H1.downsamp_summed_norm_sft_power,
-        datal=data.L1.downsamp_summed_norm_sft_power, 
+        datah=copy.deepcopy(data.H1.downsamp_summed_norm_sft_power),
+        datal=copy.deepcopy(data.L1.downsamp_summed_norm_sft_power), 
         fmin=fmin,
         fmax=fmax,
         snr=snr,

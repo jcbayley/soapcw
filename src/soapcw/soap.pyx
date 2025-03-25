@@ -18,7 +18,7 @@ class SOAP(object):
         
         self.save_dict = ["vit_track", "max_end_prob", "prev", "vitmap"]
 
-    def save_to_hdf(fname):
+    def save_to_hdf(self,fname):
 
         with h5py.File(fname, "w") as f:
             for key in self.save_dict:

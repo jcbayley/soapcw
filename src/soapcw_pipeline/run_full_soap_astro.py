@@ -129,14 +129,14 @@ def run_soap_twodet(
 
     # define the transition matrix for soap
     print(config["transitionmatrix"]["extra_left_right"], config["transitionmatrix"]["left_right_prob"],config["transitionmatrix"]["det1_prob"],config["transitionmatrix"]["det2_prob"])
-    if config["transitionmatrix"]["extra_left_right"] == False:
+    if config["transitionmatrix"]["extra_left_right"] in [False, "false"]:
         tr = soapcw.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
                                             config["transitionmatrix"]["det1_prob"],
                                             config["transitionmatrix"]["det2_prob"],
                                             log=True)
     else:
         tr = soapcw.tools.transition_matrix_2d_5jump(config["transitionmatrix"]["left_right_prob"],
-                                                1.*config["transitionmatrix"]["left_right_prob"],
+                                                config["transitionmatrix"]["extra_left_right"]*config["transitionmatrix"]["left_right_prob"],
                                                 config["transitionmatrix"]["det1_prob"],
                                                 config["transitionmatrix"]["det2_prob"],
                                                 log=True)

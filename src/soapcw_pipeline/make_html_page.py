@@ -155,28 +155,42 @@ def get_line_info(linedata, flow, fhigh):
     info = ""
     # if line files have been loaded include information on known lines
     if linedata is not None:
-
-        lines = linedata.loc[linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 0]
+        type_column = [col for col in linedata.columns if "Type" in col][0]
+        firstvis_column = [col for col in linedata.columns if "First visible" in col][0]
+        lastvis_column = [col for col in linedata.columns if "Last visible" in col][0]
+        freqoffset_column = [col for col in linedata.columns if "Frequency offset" in col][0]
+        comments_column = [col for col in linedata.columns if "Comments" in col][0]
+        lines = linedata.loc[linedata[type_column] == 0]
         lines = lines.loc[
             (lines["Frequency or frequency spacing [Hz]"] + lines[" Left width [Hz]" ] < fhigh) & 
             (lines["Frequency or frequency spacing [Hz]"] - lines[" Right width [Hz]" ] > flow)]
 
         # the spaces at the front of comments is important for the column name
         for index, line in lines.iterrows():
-            info += line[" Comments"]
+            info += line[comments_column]
 
-        combs = linedata.loc[linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 1]
+        combs = linedata.loc[linedata[type_column] == 1]
 
         for index, comb in combs.iterrows():
             spacing = comb["Frequency or frequency spacing [Hz]"]
-            first = comb["First visible harmonic"]
-            last = comb[" Last visible harmonic"]
-            offset = comb["Frequency offset [Hz]"]
+            first = comb[firstvis_column]
+            last = comb[lastvis_column]
+            offset = comb[freqoffset_column]
 
-            comb_freqs = np.arange(first, last, spacing) + offset
+            comb_freqs = np.arange(first, last)*spacing + offset
 
+            if 10 < spacing < 12 and 22.1 < flow < 22.4:
+                print(spacing)
+                print(comb_freqs)
+                print((comb_freqs < fhigh))
+                print((comb_freqs > flow))
+                print((comb_freqs < fhigh) & (comb_freqs > flow))
+                if np.any((comb_freqs < fhigh) & (comb_freqs > flow)):
+                    print("comment:", comb[comments_column])
+                sys.exit()
+                print("----------")
             if np.any((comb_freqs < fhigh) & (comb_freqs > flow)):
-                info += comb[" Comments"]
+                info += comb[comments_column]
 
     #print(info)
     if info == "" or info == np.nan or info == "nan" or info == "NaN":
@@ -328,6 +342,8 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
         if os.path.isdir(os.path.join(root_dir, head)):
             sub_headings += f"<h1> {head} </h1> <ul>"
             for subhead in os.listdir(os.path.join(root_dir, head)):
+                if subhead =="archive":
+                    continue
                 subdir = os.path.join(root_dir, head, subhead)
                 if os.path.isdir(subdir):
                     sub_headings += f'<l1><a href="{public_dir}/{head}/{subhead}/{subhead}.html"> {subhead} </a></li> </br>'
