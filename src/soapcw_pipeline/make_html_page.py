@@ -179,6 +179,7 @@ def get_line_info(linedata, flow, fhigh):
 
             comb_freqs = np.arange(first, last)*spacing + offset
 
+            """
             if 10 < spacing < 12 and 22.1 < flow < 22.4:
                 print(spacing)
                 print(comb_freqs)
@@ -189,6 +190,7 @@ def get_line_info(linedata, flow, fhigh):
                     print("comment:", comb[comments_column])
                 sys.exit()
                 print("----------")
+            """
             if np.any((comb_freqs < fhigh) & (comb_freqs > flow)):
                 info += comb[comments_column]
 

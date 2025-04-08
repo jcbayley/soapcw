@@ -8,6 +8,7 @@ import copy
 import pickle
 import h5py
 import logging
+import sys
 
 logging.basicConfig(level=logging.INFO, 
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -211,6 +212,15 @@ def loop_band_train_augment(
 
     skip_list = []#config["data"]["hardware_injections"]
 
+    even_noise_filenames = os.path.join(*[path,"even",brange,noise_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(config['cnn_data']['shift_bins'])*len(range_bands)}.hdf5"])
+    even_signal_filenames = os.path.join(*[path,"even",brange,signal_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(config['cnn_data']['shift_bins'])*len(range_bands)}.hdf5"])
+    odd_noise_filenames = os.path.join(*[path,"odd",brange,noise_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(config['cnn_data']['shift_bins'])*len(range_bands)}.hdf5"])
+    odd_signal_filenames = os.path.join(*[path,"odd",brange,signal_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(config['cnn_data']['shift_bins'])*len(range_bands)}.hdf5"])
+
+    if os.path.isfile(even_noise_filenames) and os.path.isfile(even_signal_filenames) and os.path.isfile(odd_noise_filenames) and os.path.isfile(odd_signal_filenames):
+        logging.info("!!!!!! Data already exists, skipping and exiting... !!!!!!!!!!!")
+        sys.exit(1)
+
     logging.info(f"iterating over Nbands: {len(range_bands)}")
     # main loop over all sub bands
     for i in range(len(range_bands)):
@@ -268,6 +278,7 @@ def loop_band_train_augment(
             datal = copy.deepcopy(sfts.L1.sft[:,cts:cte])
             rng_med = {"H1":copy.deepcopy(sfts.H1.rng_med[:,cts:cte]), 
                         "L1":copy.deepcopy(sfts.L1.rng_med[:,cts:cte])}
+
             
             # run injections function with new data, this saves noise iamge and injects signal and saves signal images
             noise_outs1, signal_outs1 = run_and_inj(
@@ -278,7 +289,7 @@ def loop_band_train_augment(
                 degfree = degfree, brange = brange, sfts=sfts,
                 rng_med=rng_med
                 )
-            
+  
             del datah, datal
             
             # flip data in time
@@ -292,6 +303,7 @@ def loop_band_train_augment(
                 sh=av_sh[1],
                 rng_med=copy.deepcopy(sfts.L1.rng_med[:,cts:cte]))
 
+         
             noise_outs2, signal_outs2 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
@@ -300,7 +312,7 @@ def loop_band_train_augment(
                 degfree = degfree, brange = brange,sfts=sfts,
                 rng_med={"H1":rngH, "L1":rngL}
                 )
-        
+
             del datah,datal
         
             # flip data in freq
@@ -309,6 +321,7 @@ def loop_band_train_augment(
             datal = flip_data_freq(copy.deepcopy(sfts.L1.sft[:,cts:cte]))
             rng_H = flip_data_freq(copy.deepcopy(sfts.H1.rng_med[:,cts:cte]))
             rng_L = flip_data_freq(copy.deepcopy(sfts.L1.rng_med[:,cts:cte]))
+
             noise_outs3, signal_outs3 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=av_sh,
@@ -317,13 +330,14 @@ def loop_band_train_augment(
                 degfree = degfree, brange = brange,sfts=sfts,
                 rng_med={"H1":rng_H, "L1":rng_L}
                 )
-            
+
             del datah,datal
             
             # roll data in time by 100 bins
         
             datah,shH, rngH = roll_in_time(copy.deepcopy(sfts.H1.sft[:,cts:cte]),numbins=100,sh=av_sh[0],rng_med=copy.deepcopy(sfts.H1.rng_med[:,cts:cte]))
             datal,shL, rngL = roll_in_time(copy.deepcopy(sfts.L1.sft[:,cts:cte]),numbins=100,sh=av_sh[1],rng_med=copy.deepcopy(sfts.L1.rng_med[:,cts:cte]))
+            tinit = 0
             noise_outs4, signal_outs4 = run_and_inj(
                 config,
                 datah,datal,flow,width,resize_image=resize_image,av_sh=[shH,shL],
@@ -350,10 +364,6 @@ def loop_band_train_augment(
     logging.info("saving data to file .......")
 
 
-    even_noise_filenames = os.path.join(*[path,"even",brange,noise_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
-    even_signal_filenames = os.path.join(*[path,"even",brange,signal_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
-    odd_noise_filenames = os.path.join(*[path,"odd",brange,noise_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
-    odd_signal_filenames = os.path.join(*[path,"odd",brange,signal_out_snr,f"freq_{bandmin:.1f}_{bandmax:.1f}_{len(shifts)*len(range_bands)}.hdf5"])
 
     for fname, temp_data in zip([even_noise_filenames, even_signal_filenames, odd_noise_filenames, odd_signal_filenames], [even_noise_save_outs, even_signal_save_outs, odd_noise_save_outs, odd_signal_save_outs]):
         if not os.path.isdir(os.path.dirname(fname)):
@@ -546,7 +556,7 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
     pars = {}
     for key in param_list:
         if key == "f":
-            pars[key] = np.random.uniform(fmin + 0.025, fmin + width - 0.025)
+            pars[key] = np.random.uniform(fmin + 0.027, fmin + width - 0.027)
         else:
             pars[key] = np.random.uniform(config["cnn_data"][f"{key}_range"][0], config["cnn_data"][f"{key}_range"][1])
     #for j in np.linspace(0,len(param_list)-1,len(param_list)).astype(int):

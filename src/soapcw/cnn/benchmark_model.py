@@ -227,7 +227,7 @@ def run_model(
     
     load_model_fname = os.path.join(load_model, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt")
     print(f"Loading model from {load_model_fname}") 
-    checkpoint = torch.load(load_model_fname, map_location=device)
+    checkpoint = torch.load(load_model_fname, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint["model_state_dict"])
     optimiser.load_state_dict(checkpoint["optimiser_state_dict"])
 

@@ -1111,8 +1111,19 @@ class SimulateSpectrogramfromSFT(SimulateGaussianNoiseSpectrogram):
         tmax_gps = lal.LIGOTimeGPS(int(self.epochs[-1]),0)
         constraints.maxStartTime=tmax_gps
 
+        f0 = self.f[0]
+        sftminfreq = int(sftpaths.split('F')[-1].split('Hz')[0])
+        width = int(sftpaths.split('W')[-1].split('Hz')[0])
+
+        if np.abs(self.fmin - sftminfreq) < 0.1:
+            f0 += 0.2
+        elif np.abs(self.fmax - (sftminfreq + width)) < 0.1:
+            f0 -= 0.2
+        else:
+            pass
+
         snr_ = pyfstat.SignalToNoiseRatio.from_sfts(
-            F0=self.f[0], 
+            F0=f0, 
             sftfilepath=sftpaths,
             sft_constraint=constraints)
 

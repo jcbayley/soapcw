@@ -240,7 +240,7 @@ class LoadData(torch.utils.data.Dataset):
 
     def __init__(self, noise_load_directory, signal_load_directory, load_types = ["stats", "vit_imgs", "H_imgs", "L_imgs"], 
                 shuffle=True, nfile_load="all", snr_min=None, snr_max=None, return_parameters=False, n_load_files=1, 
-                batch_size=128, sort_filenames=False, hwinj_file=None):
+                batch_size=128, sort_filenames=False, hwinj_file=None, load_files_now=True):
         self.load_types = load_types
         self.noise_load_directory = noise_load_directory
         self.signal_load_directory = signal_load_directory
@@ -276,7 +276,8 @@ class LoadData(torch.utils.data.Dataset):
             self.n_load_types = len(self.load_types)
 
         self.get_filenames()
-        self.load_files_to_data()
+        if load_files_now:
+            self.load_files_to_data()
 
         
 
@@ -639,7 +640,7 @@ def train_model(
             load_model_fname = os.path.join(load_model, f"model_{model_type}_for_{other_bandtype}_F{fmin}_{fmax}.pt")
         else:
             raise Exception(f"Model path {load_model} not found")
-        checkpoint = torch.load(load_model_fname, map_location=device)
+        checkpoint = torch.load(load_model_fname, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"])
         if continue_train:
             optimiser.load_state_dict(checkpoint["optimiser_state_dict"])
@@ -767,6 +768,7 @@ def main():
     parser.add_argument("-lm", "--load-model", help="load model from path", default=None)
     parser.add_argument("-lr", "--learning-rate", help="learning rate", default=None, type=float)
     parser.add_argument("-nu", "--n-updates-per-batch", help="number of updates per batch", default=1, type=int)
+    parser.add_argument("-ne", "--n-epochs", help="number of epochs", default=10, type=int)
     device = "cuda:0"
                                                     
     args = parser.parse_args()  
@@ -799,6 +801,9 @@ def main():
 
     if args.learning_rate is not None:
         cfg["cnn_model"]["learning_rate"] = str(args.learning_rate)
+
+    if args.n_epochs is not None:
+        cfg["cnn_model"]["n_epochs"] = str(args.n_epochs)
 
     for bandtype in bandtypes:
         train_model(cfg["cnn_model"]["model_type"], 
