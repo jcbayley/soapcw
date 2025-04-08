@@ -2,6 +2,7 @@ matplotlib
 Cython
 scipy
 lalsuite
+pyfstat
 numpy<=1.26.4
 torch
 appdirs
@@ -11,4 +12,4 @@ regex
 importlib_resources
 requests
 pandas
-pyfstat
+
