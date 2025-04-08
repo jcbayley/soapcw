@@ -1,8 +1,8 @@
-matplotlib
 Cython
+git+https://github.com/PyFstat/PyFstat
+matplotlib
 scipy
 lalsuite
-PyFstat
 numpy<=1.26.4
 torch
 appdirs
