@@ -1,5 +1,6 @@
-matplotlib
 Cython
+git+https://github.com/PyFstat/PyFstat
+matplotlib
 scipy
 lalsuite
 numpy<=1.26.4
@@ -11,3 +12,4 @@ regex
 importlib_resources
 requests
 pandas
+

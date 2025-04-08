@@ -19,5 +19,6 @@ lalsuite
 numpy
 torch
 appdirs
-
+pyfstat
+torch-summary
 
