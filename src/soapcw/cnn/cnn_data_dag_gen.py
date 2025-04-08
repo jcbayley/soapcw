@@ -26,7 +26,7 @@ def write_subfile(sub_filename,config_file,config,datatype,comment,dirs, verbose
     with open(sub_filename,'w') as f:
         f.write('# filename: {}\n'.format(sub_filename))
         f.write('universe = vanilla\n')
-        execute = os.path.join(os.path.split(sys.executable)[0],config["code"]["search_exec"])
+        execute = os.path.join(os.path.split(sys.executable)[0],config["scripts"]["data_gen_exec"])
         f.write('executable = {}\n'.format(execute))
         #f.write('enviroment = ""\n')
         f.write('getenv  = True\n')
@@ -37,9 +37,9 @@ def write_subfile(sub_filename,config_file,config,datatype,comment,dirs, verbose
         f.write('output = {}/{}_$(cluster).out\n'.format(output_dir,comment))
         args = "arguments = -c {} ".format(config_file)
 
-        args += f' -l $(bandstart) -u $(bandend) -w $(bandwidth) --data-type {datatype} -rt {config["data"]["run"]}'
+        args += f' -l $(bandstart) -u $(bandend) -w $(bandwidth) --data-type {datatype} -rt {config["data"]["obs_run"]}'
         
-        if config["data"]["run"] == "gauss" and datatype == "train":
+        if config["data"]["obs_run"] == "gauss" and datatype == "train":
             args += f' -np {config["data"]["nperband"]}'
         else:
             args += f' -np 1'
@@ -54,11 +54,11 @@ def write_subfile(sub_filename,config_file,config,datatype,comment,dirs, verbose
 
 def write_dagfile(config, datatype="train"):
 
-    condor_dir = "{}/condor".format(config["condor"]["root_dir"])
-    output_dir = "{}/condor/output".format(config["condor"]["root_dir"])
+    condor_dir = "{}/condor_cnn".format(config["general"]["root_dir"])
+    output_dir = "{}/output".format(condor_dir)
     save_dir = "{}".format(config["general"]["save_dir"])
-    log_dir = "{}/condor/logs".format(config["condor"]["root_dir"])
-    err_dir = "{}/condor/err".format(config["condor"]["root_dir"])
+    log_dir = "{}/logs".format(condor_dir)
+    err_dir = "{}/err".format(condor_dir)
     dirs = [log_dir,err_dir,output_dir,condor_dir,save_dir]
     create_dirs(dirs)
 
@@ -66,15 +66,14 @@ def write_dagfile(config, datatype="train"):
 
     band_list = []
     for i, bs in enumerate(config["data"]["band_starts"]):
-        bandstart = np.arange(config["data"]["band_starts"][i], config["data"]["band_ends"][i], config["condor"]["data_load_size"] - 0.1)[:-1]
-        bandend = bandstart + config["condor"]["data_load_size"]
+        bandstart = np.arange(config["data"]["band_starts"][i], config["data"]["band_ends"][i], config["narrowband"]["band_width"] - 0.1)[:-1]
+        bandend = bandstart + config["narrowband"]["band_width"]
         bandwidths =  [config["data"]["band_widths"][i]] * len(bandstart)
         tlist = np.array([bandstart, bandend, bandwidths]).T
         band_list.append(tlist)
 
-    print(config["data"]["run"])
 
-    sub_comment = f'{config["data"]["run"]}_{datatype}_split'
+    sub_comment = f'cnn_datagen_{config["data"]["obs_run"]}_{datatype}_split'
     
     sub_filename = "{}/{}.sub".format(condor_dir,sub_comment)
     write_subfile(sub_filename,config.config_file,config,datatype,sub_comment,dirs,verbose=False)
@@ -91,7 +90,7 @@ def write_dagfile(config, datatype="train"):
                 uid = seeds[i*j]
                 jobid = "{}_{}_{}".format(comment,i*j,uid)
                 job_string = "JOB {} {}\n".format(jobid,sub_filename)
-                retry_string = "RETRY {} 10\n".format(jobid)
+                retry_string = "RETRY {} 1\n".format(jobid)
                 vars_string = f'VARS {jobid} bandstart="{sband[0]}" bandend="{sband[1]}" bandwidth="{sband[2]}"\n'
                 f.write(job_string)
                 f.write(retry_string)
@@ -113,7 +112,7 @@ def main():
 
     config = SOAPConfig(args.config_file)
 
-    for k, typename in enumerate(config["data"]["type"]):
+    for k, typename in enumerate(config["cnn_data"]["type"]):
         write_dagfile(config, typename)
 
 if __name__ == '__main__':

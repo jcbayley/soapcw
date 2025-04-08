@@ -31,483 +31,66 @@ def make_directory_structure(root_dir):
     """
 
 def create_page_usage_page():
-    html = ''' <!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <title>Usage</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="css/general.css" media="screen" type="text/css">
-    </head>
-    <body>
+    # Read the original HTML file
+    my_resources = importlib_resources.files("soapcw_pipeline")
+    original_file = (my_resources / "html"/ "usage.html")
+    with open(original_file) as source:
+        content = source.read()
 
-    <div class="navbar">
-    <a href="index.html" class="active">Home</a>
-    <a href="astrophysical/astropage.html">Astrophysical Search</a>
-    <a href="lines/linepage.html">Line Search</a>
-    <a href=""https://git.ligo.org/joseph.bayley/soapcw"" class="right">Code</a>
-    <a href="page_usage.html" class="right">About/Usage</a>
-    </div>
-
-    <div class="row">
-    <div class="side">
-        <h2>SOAP</h2>
-        <div><img style="width:50%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/logo/drawing.png" alt="SOAP logo"/></div>
-        <p>The SOAP search is a rapid search for continuous gravitational waves using the Viterbi algorithm</p>
-        <h3>Links</h3>
-        <p>GitLab: <a href="https://git.ligo.org/joseph.bayley/soapcw">https://git.ligo.org/joseph.bayley/soapcw</a></p>
-        <p><a href="https://joseph.bayley.docs.ligo.org/soapcw/index.html">Documentation</a></p>
-
-        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006">Methods Paper</a></p>
-        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024">CNN followup paper</a></p>
-        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022">Parameter estimation paper</a></p>
-    </div>
-    <div class="main">
-        <h2>How to use these pages</h2>
-        The run pages are built around a table of each of the frequency bands that are run on and an image showing the output spectrograms and viterbi tracks along with other information.
-    
-        To filter which frequency bands to use the box to the top left gives a set of options
-
-        <img style="width:30%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/options.png" />
-        <ul>
-        <li> In the first box one can sort the table based on one of the selected headings in ascending or descending order. </li>
-        <li> In the second box there is a choice of a number of variables, checking these will include them in the table. </li>
-        <li> The third box filters the frequency ranges, input the ranges and clikc filter to change the frequency range </li>
-        <li> The fourth box has two buttons (last page, next page), these move between the table pages forwards and backwards </li>
-        <ul>
-
-        <img style="width:30%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/table.png" />
-
-        The table then shows a list of different frequency bands defined by the fmin and fmax.
-        By default it shows the lineaware stat, which is the line aware statistic output from the SOAP search, and the info column. 
-        The info column contains extra information about which is known about that band, i.e. info from line investigations or hw injections
-
-        By clicking on one of these cells it shows a plot and a table containing all of the information about this band.
-        The table of information looks like this:
-
-        <img style="width:100%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/band_summary.png" />
-
-        Which contains all table columns. The hide track button is used to toggle the viterbi track in the plot. 
-        The previous and next buttons cycle through the table in order.
-
-        <img style="width:60%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/plot.png" />
-
-        The plot then contains a number of panels showing information about the band.
-        <ul>
-        <li> The first panel shows the time-frequency spectrogram from L1 with the viterbi track overlayed </li>
-        <li> The second panel shows the time-frequency spectrogram from H1 with the viterbi track overlayed </li>
-        <li> The third panel shows the viterbi map from the combination of both detectors, this is related to the probability that a signal is present in any particular time-frequency bin </li>
-        <li> The fourth panel shows the normalised SFT power along the red Viterbi track </li>
-        <li> The fifth panel shows the mean noise floor across the frequency band as a function of time. </li>
-        <ul>
-    </div>
-    </div>
-
-    <div class="footer">
-        <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
-
-    </div>
-
-    </body>
-    </html>'''
-    return html
+    return content
 
 
 def create_home_page():
+    # Read the original HTML file
+    my_resources = importlib_resources.files("soapcw_pipeline")
+    original_file = (my_resources / "html"/ "homepage.html")
+    with open(original_file) as source:
+        content = source.read()
 
-
-    html = ''' <!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <title>SOAP</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="css/general.css" media="screen" type="text/css">
-    </head>
-    <body>
-
-    <div class="navbar">
-    <a href="index.html" class="active">Home</a>
-    <a href="astrophysical/astropage.html">Astrophysical Search</a>
-    <a href="lines/linepage.html">Line Search</a>
-    <a href="https://git.ligo.org/joseph.bayley/soapcw" class="right">Code</a>
-    <a href="page_usage.html" class="right">About/Usage</a>
-    </div>
-
-    <div class="row">
-    <div class="side">
-        <h2>SOAP</h2>
-        <div><img style="width:50%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/logo/drawing.png" alt="SOAP logo"/></div>
-        <p>The SOAP search is a rapid search for continuous gravitational waves using the Viterbi algorithm</p>
-        <h3>Links</h3>
-        <p>GitLab: <a href="https://git.ligo.org/joseph.bayley/soapcw">https://git.ligo.org/joseph.bayley/soapcw</a></p>
-        <p><a href="https://joseph.bayley.docs.ligo.org/soapcw/index.html">Documentation</a></p>
-
-        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006">Methods Paper</a></p>
-        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024">CNN followup paper</a></p>
-        <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022">Parameter estimation paper</a></p>
-    </div>
-    <div class="main">
-        <h2>General info about SOAP</h2>
-        <img style="width:70%" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/pipeline/images/vitmap_ex.png" />
-        <br>
-        <h2>Astrophysical search</h2>
-        <p>The astrophysical search runs using sets of 1800s SFTs summed over one day and combining each detector using the <a href="https://joseph.bayley.docs.ligo.org/soapcw/bayesianlineaware.html">line aware statistic</a></p>
-        <h2>Line search</h2>
-        <p>The line search also runs on sets of 1800s SFTs summed over one day, however are the search is run separately for each detector to identify instrumental artefacts within the data.</p>
-
-
-    </div>
-    </div>
-
-    <div class="footer">
-        <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
-
-    </div>
-
-    </body>
-    </html>'''
-    return html
+    return content
 
 def create_astro_page(run_headings, sub_headings):
 
-    html = f'''<!DOCTYPE html>
-            <html lang="en">
-            <head>
-            <title>Astro Page</title>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <link rel="stylesheet" href="../css/general.css" media="screen" type="text/css">
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-            </head>
-            <body>
+    # Read the original HTML file
+    my_resources = importlib_resources.files("soapcw_pipeline")
+    original_file = (my_resources / "html"/ "astropage.html")
+    with open(original_file) as source:
+        content = source.read()
 
+    # Find the starting point of the dynamic content
+    content = content.replace("!!!REPLACE_run_headings_REPLACE!!!", run_headings)
+    content = content.replace("!!!REPLACE_sub_headings_REPLACE!!!", sub_headings)
 
-            <div class="navbar">
-            <a href="../index.html" class="active">Home</a>
-            <a href="../astrophysical/astropage.html">Astrophysical Search</a>
-            <a href="../lines/linepage.html">Line Search</a>
-
-            <a></a>
-            {run_headings}
-
-            <a href="https://git.ligo.org/joseph.bayley/soapcw" class="right">Code</a>
-            <a href="../page_usage.html" class="right">About/Usage</a>
-            </div>
-
-
-            <div class="row">
-            <div class="side">
-                <h2>About</h2>
-                <div><img style="width:50%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/logo/drawing.png" alt="SOAP logo"/></div>
-                    <p>The SOAP search is a rapid search for continuous gravitational waves using the Viterbi algorithm</p>
-                    <h3>Links</h3>
-                    <p>GitLab: <a href="https://git.ligo.org/joseph.bayley/soapcw">https://git.ligo.org/joseph.bayley/soapcw</a></p>
-                    <p><a href="https://joseph.bayley.docs.ligo.org/soapcw/index.html">Documentation</a></p>
-
-                    <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006">Methods Paper</a></p>
-                    <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024">CNN followup paper</a></p>
-                    <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022">Parameter estimation paper</a></p>
-            </div>
-            <div class="main">
-                <h2>List of runs with information</h2>
-                <p>For each of the observing runs there were multiple runs of SOAP with different settings, the recommended one to use is at the top of the list.</p>
-                {sub_headings}
-            </div>
-            </div>
-
-            <div class="footer">
-                <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
-            </div>
-
-            </body>
-
-            </html>'''
-
-    return html
+    return content
 
 def create_line_page(run_headings, sub_headings):
 
-    html = f'''<!DOCTYPE html>
-            <html lang="en">
-            <head>
-            <title>Line Page</title>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <link rel="stylesheet" href="../css/general.css" media="screen" type="text/css">
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-            </head>
-            <body>
+    # Read the original HTML file
+    my_resources = importlib_resources.files("soapcw_pipeline")
+    original_file = (my_resources / "html"/ "linepage.html")
+    with open(original_file) as source:
+        content = source.read()
 
+    # Find the starting point of the dynamic content
+    content = content.replace("!!!REPLACE_run_headings_REPLACE!!!", run_headings)
+    content = content.replace("!!!REPLACE_sub_headings_REPLACE!!!", sub_headings)
 
-            <div class="navbar">
-            <a href="../index.html" class="active">Home</a>
-            <a href="../astrophysical/astropage.html">Astrophysical Search</a>
-            <a href="../lines/linepage.html">Line Search</a>
-
-            <a></a>
-            {run_headings}
-
-            <a href="https://git.ligo.org/joseph.bayley/soapcw" class="right">Code</a>
-            <a href="../page_usage.html" class="right">About/Usage</a>
-            </div>
-
-
-            <div class="row">
-            <div class="side">
-                <h2>About</h2>
-                <div><img style="width:50%;margin-right:auto;margin-left:auto;display:block" src="https://git.ligo.org/joseph.bayley/soapcw/-/raw/master/logo/drawing.png" alt="SOAP logo"/></div>
-                    <p>The SOAP search is a rapid search for continuous gravitational waves using the Viterbi algorithm</p>
-                    <h3>Links</h3>
-                    <p>GitLab: <a href="https://git.ligo.org/joseph.bayley/soapcw">https://git.ligo.org/joseph.bayley/soapcw</a></p>
-                    <p><a href="https://joseph.bayley.docs.ligo.org/soapcw/index.html">Documentation</a></p>
-
-                    <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006">Methods Paper</a></p>
-                    <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024">CNN followup paper</a></p>
-                    <p><a href="https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022">Parameter estimation paper</a></p>
-            </div>
-            <div class="main">
-                <h2>List of runs with information</h2>
-                <p>SOAP is run separately for each detector, without the Baysian line aware statistic, using just the summed power as a statistic.</p>
-                {sub_headings}
-            </div>
-            </div>
-
-            <div class="footer">
-                <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
-            </div>
-
-            </body>
-
-            </html>'''
-
-    return html
+    return content
 
 
 
 def create_run_page(run_headings, obs_run="run", toplist=''):
+    # Read the original HTML file
+    my_resources = importlib_resources.files("soapcw_pipeline")
+    original_file = (my_resources / "html"/ "runpage.html")
+    with open(original_file) as source:
+        content = source.read()
 
+    # Find the starting point of the dynamic content
+    content = content.replace("!!!REPLACE_obs_run_REPLACE!!!", obs_run)
+    content = content.replace("!!!REPLACE_run_headings_REPLACE!!!", run_headings)
 
-    html = f'''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <title>{obs_run}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../../../css/general.css" media="screen" type="text/css">
-
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">   
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.2/css/jquery.dataTables.min.css"></style>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-
-
-    </head>
-
-    <body>
-
-    <div class="navbar">
-    <a href="../../../index.html" class="active">Home</a>
-    <a href="../../../astrophysical/astropage.html">Astrophysical Search</a>
-    <a href="../../../lines/linepage.html">Line Search</a>
-    <a></a>
-    {run_headings}
-    <a href="https://git.ligo.org/joseph.bayley/soapcw" class="right">Code</a>
-    <a href="../../../page_usage.html" class="right">About/Usage</a>
-    </div>
-
-    <div class="row">
-    <div class="side"> 
-
-        <div style="display:flex">
-            <button type="button" class="btn btn-cl" style="width:100%; margin:3px" id="filterdivbutton" onclick="filterDivs(event)"> Hide filters</button>
-        </div>
-        <div class="box" id="sortdiv">
-        Sort table by: 
-        <select name="Sortby" id="sortby" key="fmin" onchange=reloadPage(event)></select>
-        <select name="Sortorder" id="sortorder" key="descending" onchange=reloadPage(event)>
-            <option key="ascending">Ascending</option>
-            <option key="descending">Descending</option>
-        </select>
-        </div>
-
-        <div class="box" id="checkboxdiv">
-        Include column in table:
-        <form id="checkboxform">
-        </form>
-        </div>
-
-        <div class="box" id="filterdiv">
-        Filter frequencies: 
-        </br>
-        Min: <input type="text" id="minfreq" name="minfreq" size="4" maxlength="6" value="0"> Hz ----
-        Max: <input type="text" id="maxfreq" name="maxfreq" size="4" maxlength="6" value="2000"> Hz 
-        </br>
-        <button type="button" style="margin:3px" class="btn btn-cl py-3" id="filtertable" onclick="reloadPage(event)"> Filter</button>
-        <button type="button" class="btn btn-cl py-3" id="filtertablereset" onclick="resetTable(event)"> Reset</button>
-        </div>
-        <div class="box" id="filterlinediv">
-        Filter Info: 
-        </br>
-        <input type="checkbox" id="onlyhwinjs" name="onlyhwinjs" value="1" onclick=reloadPage(event)> Only Hw injs</input>
-        <input type="checkbox" id="onlyknownlines" name="onlyknownlines" value="1" onclick=reloadPage(event)> Only known lines</input>
-        </br>
-        <input type="checkbox" id="hidehwinjs" name="hidehwinjs" value="1" onclick=reloadPage(event)> Hide Hw injs</input>
-        <input type="checkbox" id="hideknownlines" name="hideknownlines" value="1" onclick=reloadPage(event)> Hide known lines</input>
-        </div>
-        <div class="box" id="showalldiv">
-        <button type="button" class="btn btn-cl py-3" id="lastpagebutton" value=0 onclick="lastTablePage(event)"> Last page</button>
-        <button type="button" class="btn btn-cl py-3" id="nextpagebutton" value=0 onclick="nextTablePage(event)"> Next page</button>
-        </div>
-
-        <table cellpadding="4" border="1" class="table table-bordered table-striped" id="inTable" > 
-        </table>
-        <img src="./summary_histogram.png" id="hist_image" value="0"></img>
-    </div>
-
-    <div class="main">
-        <div> 
-        <button type="button" style="margin:3px" class="btn btn-cl" id="trackbutton" value="0" onclick="showHideTrack(event)">Hide track</button> 
-        <button type="button" style="margin:3px" class="btn btn-cl py-3" id="prevbutton" value="0" onclick="previousImage(event)">Previous</button>
-        <button type="button" style="margin:3px" class="btn btn-cl py-3" id="nextbutton" value="0" onclick="nextImage(event)">Next</button> 
-        
-        <table cellpadding="4" border="1" id="infoTable" class="table table-striped table-bordered"> 
-        </table>
-        </div>
-
-        <div class="imagewrap"> 
-        <img src="" id="image" value="0"></img> 
-        </div>
-    </div>
-    </div>
-
-    <div class="footer">
-    <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
-    </div>
-
-    <script type="text/javascript" src="../../../scripts/table_scripts{toplist}.js"></script>
-
-    </body>
-
-
-    </html>
-    '''
-
-    # button to be added to show all of the frequency bands
-    """ <div class="box" id="showalldiv">
-        <button type="button" class="btn btn-cl py-3" id="showallbutton" onclick="loadAllBands(event)"> Load all bands</button>
-        </div>"""
-
-    return html
-
-def create_line_run_page(run_headings, obs_run="run"):
-
-
-    html = f'''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <title>{obs_run}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../../../../css/general.css" media="screen" type="text/css">
-
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">   
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.2/css/jquery.dataTables.min.css"></style>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-
-
-    </head>
-
-    <body>
-
-    <div class="navbar">
-    <a href="../../../index.html" class="active">Home</a>
-    <a href="../../../astrophysical/astropage.html">Astrophysical Search</a>
-    <a href="../../../lines/linepage.html">Line Search</a>
-    <a></a>
-    {run_headings}
-    <a href="https://git.ligo.org/joseph.bayley/soapcw" class="right">Code</a>
-    <a href="../../../page_usage.html" class="right">About/Usage</a>
-    </div>
-
-    <div class="row">
-    <div class="side"> 
-
-        <div style="display:flex">
-            <button type="button" class="btn btn-cl" style="width:100%; margin:3px" id="filterdivbutton" onclick="filterDivs(event)"> Hide filters</button>
-        </div>
-        <div class="box" id="sortdiv">
-        Sort table by: 
-        <select name="Sortby" id="sortby" key="fmin" onchange=reloadPage(event)></select>
-        <select name="Sortorder" id="sortorder" key="descending" onchange=reloadPage(event)>
-            <option key="ascending">Ascending</option>
-            <option key="descending">Descending</option>
-        </select>
-        </div>
-
-        <div class="box" id="checkboxdiv">
-        Include column in table:
-        <form id="checkboxform">
-        </form>
-        </div>
-
-        <div class="box" id="filterdiv">
-        Filter frequencies: 
-        </br>
-        Min: <input type="text" id="minfreq" name="minfreq" size="4" maxlength="6" value="0"> Hz ----
-        Max: <input type="text" id="maxfreq" name="maxfreq" size="4" maxlength="6" value="2000"> Hz 
-        </br>
-        <button type="button" style="margin:3px" class="btn btn-cl py-3" id="filtertable" onclick="reloadPage(event)"> Filter</button>
-        <button type="button" class="btn btn-cl py-3" id="filtertablereset" onclick="resetTable(event)"> Reset</button>
-        </div>
-        <div class="box" id="showalldiv">
-        <button type="button" class="btn btn-cl py-3" id="lastpagebutton" value=0 onclick="lastTablePage(event)"> Last page</button>
-        <button type="button" class="btn btn-cl py-3" id="nextpagebutton" value=0 onclick="nextTablePage(event)"> Next page</button>
-        </div>
-
-        <table cellpadding="4" border="1" class="table table-bordered table-striped" id="inTable" > 
-        </table>
-    </div>
-
-    <div class="main">
-        <div> 
-        <button type="button" style="margin:3px" class="btn btn-cl" id="trackbutton" value="0" onclick="showHideTrack(event)">Hide track</button> 
-        <button type="button" style="margin:3px" class="btn btn-cl py-3" id="prevbutton" value="0" onclick="previousImage(event)">Previous</button>
-        <button type="button" style="margin:3px" class="btn btn-cl py-3" id="nextbutton" value="0" onclick="nextImage(event)">Next</button> 
-        
-        <table cellpadding="4" border="1" id="infoTable" class="table table-striped table-bordered"> 
-        </table>
-        </div>
-
-        <div class="imagewrap"> 
-        <img src="" id="image" value="0"></img> 
-        </div>
-    </div>
-    </div>
-
-    <div class="footer">
-    <p>If you have any problems with this page please submit an issue to: https://git.ligo.org/joseph.bayley/soapcw/-/issues or contact: joseph.bayley@glasgow.ac.uk </p>
-    </div>
-
-    <script type="text/javascript" src="../../../scripts/table_scripts.js"></script>
-
-    </body>
-
-
-    </html>
-    '''
-
-    # button to be added to show all of the frequency bands
-    """ <div class="box" id="showalldiv">
-        <button type="button" class="btn btn-cl py-3" id="showallbutton" onclick="loadAllBands(event)"> Load all bands</button>
-        </div>"""
-
-    return html
+    return content
 
 
 def read_line_files_old(linefile,det=None):
@@ -572,28 +155,44 @@ def get_line_info(linedata, flow, fhigh):
     info = ""
     # if line files have been loaded include information on known lines
     if linedata is not None:
-
-        lines = linedata.loc[linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 0]
+        type_column = [col for col in linedata.columns if "Type" in col][0]
+        firstvis_column = [col for col in linedata.columns if "First visible" in col][0]
+        lastvis_column = [col for col in linedata.columns if "Last visible" in col][0]
+        freqoffset_column = [col for col in linedata.columns if "Frequency offset" in col][0]
+        comments_column = [col for col in linedata.columns if "Comments" in col][0]
+        lines = linedata.loc[linedata[type_column] == 0]
         lines = lines.loc[
             (lines["Frequency or frequency spacing [Hz]"] + lines[" Left width [Hz]" ] < fhigh) & 
             (lines["Frequency or frequency spacing [Hz]"] - lines[" Right width [Hz]" ] > flow)]
 
         # the spaces at the front of comments is important for the column name
         for index, line in lines.iterrows():
-            info += line[" Comments"]
+            info += line[comments_column]
 
-        combs = linedata.loc[linedata["Type (0:line; 1:comb; 2:comb with scaling width)"] == 1]
+        combs = linedata.loc[linedata[type_column] == 1]
 
         for index, comb in combs.iterrows():
             spacing = comb["Frequency or frequency spacing [Hz]"]
-            first = comb["First visible harmonic"]
-            last = comb[" Last visible harmonic"]
-            offset = comb["Frequency offset [Hz]"]
+            first = comb[firstvis_column]
+            last = comb[lastvis_column]
+            offset = comb[freqoffset_column]
 
-            comb_freqs = np.arange(first, last, spacing) + offset
+            comb_freqs = np.arange(first, last)*spacing + offset
 
+            """
+            if 10 < spacing < 12 and 22.1 < flow < 22.4:
+                print(spacing)
+                print(comb_freqs)
+                print((comb_freqs < fhigh))
+                print((comb_freqs > flow))
+                print((comb_freqs < fhigh) & (comb_freqs > flow))
+                if np.any((comb_freqs < fhigh) & (comb_freqs > flow)):
+                    print("comment:", comb[comments_column])
+                sys.exit()
+                print("----------")
+            """
             if np.any((comb_freqs < fhigh) & (comb_freqs > flow)):
-                info += comb[" Comments"]
+                info += comb[comments_column]
 
     #print(info)
     if info == "" or info == np.nan or info == "nan" or info == "NaN":
@@ -699,7 +298,11 @@ def make_json_from_hdf5(root_dir, linepaths=None, table_order=None, hwinjfile=No
         filtered_json_data = filter_json_by_key_range(json_data, "fmin", f0, f1)
         # take top 2% of stats in band
         fraction_keep = 0.97
-        sorted_filtered_json_data = sorted(filtered_json_data, key=lambda d: d["lineaware_stat"])[int(fraction_keep*len(filtered_json_data)):]
+        if "lineaware_stat" in filtered_json_data[0]:
+            sorted_filtered_json_data = sorted(filtered_json_data, key=lambda d: d["lineaware_stat"])[int(fraction_keep*len(filtered_json_data)):]
+        else:
+            sorted_filtered_json_data = sorted(filtered_json_data, key=lambda d: d["H1_viterbistat"])[int(fraction_keep*len(filtered_json_data)):]
+
         print(f0, f1, len(sorted_filtered_json_data), len(sorted_filtered_json_data), len(filtered_json_data))
         toplistjson.extend(sorted_filtered_json_data)
 
@@ -741,6 +344,8 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
         if os.path.isdir(os.path.join(root_dir, head)):
             sub_headings += f"<h1> {head} </h1> <ul>"
             for subhead in os.listdir(os.path.join(root_dir, head)):
+                if subhead =="archive":
+                    continue
                 subdir = os.path.join(root_dir, head, subhead)
                 if os.path.isdir(subdir):
                     sub_headings += f'<l1><a href="{public_dir}/{head}/{subhead}/{subhead}.html"> {subhead} </a></li> </br>'
@@ -755,6 +360,7 @@ def get_html_string(root_dir, linepaths=None, table_order=None, force_overwrite=
                         else:
                             print(f"WARNING: No new updates to {subhead}, {subdir}")
                     else:
+                        print(f"Creating json for {subhead} -- {subdir}")
                         make_json_from_hdf5(subdir, linepaths, table_order, hwinjfile=hwinjfile)
 
                     try:
@@ -800,7 +406,7 @@ def get_html_string_week(root_dir, linepath=None, table_order=None):
                                 else:
                                     make_json_from_hdf5(weekdir, linepaths, table_order)
 
-                                run_html = create_line_run_page(line_run_headings, obs_run=head)
+                                run_html = create_run_page(line_run_headings, obs_run=head)
                                 with open(os.path.join(weekdir, f"{subhead}.html"), "w") as f:
                                     f.write(run_html)
                             else:
@@ -814,7 +420,7 @@ def get_html_string_week(root_dir, linepath=None, table_order=None):
                                 else:
                                     make_json_from_hdf5(subdir, linepaths, table_order)
 
-                                run_html = create_line_run_page(line_run_headings, obs_run=head)
+                                run_html = create_run_page(line_run_headings, obs_run=head)
                                 with open(os.path.join(subdir, f"{subhead}.html"), "w") as f:
                                     f.write(run_html)
                 sub_headings += "</ul>"
@@ -843,7 +449,7 @@ def make_summary_histogram(root_dir):
         ax[i].legend(fontsize="17")
         ax[i].set_ylabel("count", fontsize="17")
         #ax[i].set_xlabel(f"Viterbi statistic [{st[0]} - {st[1]} Hz]", fontsize="17")
-        ax[i].set_xlabel(f"Viterbi statistic", fontsize="17")
+        ax[i].set_xlabel(f"Line-aware statistic", fontsize="17")
         #ax[i].set_yscale("log")
     fig.tight_layout()
 
@@ -887,7 +493,7 @@ def write_pages(cfg, root_dir, linepaths, table_order, force_overwrite=False, hw
 
 def main():
     import argparse
-    from .soap_config_parser import SOAPConfig
+    from soapcw.soap_config_parser import SOAPConfig
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('-c', '--config-file', help='config file', type=str, required=True, default=None)
@@ -917,7 +523,7 @@ def main():
     else:
         hwinjfile = None
 
-    table_order = ["fmin", "fmax", "lineaware_stat", "H1_viterbistat", "L1_viterbistat", "CNN_vitmap_stat", "CNN_spect_stat", "CNN_vitmapstat_stat", "CNN_all_stat", "plot_path"]
+    table_order = ["fmin", "fmax", "lineaware_stat", "H1_viterbistat", "L1_viterbistat", "CNN_vitmap_stat", "CNN_spect_stat", "CNN_vitmapstat_stat", "CNN_vitmapspect", "CNN_all_stat", "plot_path"]
 
     write_pages(cfg, os.path.dirname(os.path.normpath(cfg["output"]["save_directory"])), linepaths, table_order, force_overwrite=args.force_overwrite, hwinjfile=hwinjfile)
 

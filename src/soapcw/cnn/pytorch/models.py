@@ -2,9 +2,61 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+
+class VitmapSpectrogramCNN(nn.Module):
+
+    def __init__(self, input_dim, fc_layers, conv_layers, stride=1, device="cpu", dropout=0.0, inchannels=1, avg_pool_size=None):
+        """
+        args
+        ----------
+        input_dim: int
+            length of input time series
+        latent_dim: int
+            number of variables in latent space
+        fc_layers: list
+            list of the fully connected layers [8, 4, 2] (8 neurons, 4 neurons, 2 neurons)
+        conv_layers: list
+            list of the convolutional layers [(8, 5, 2, 1), (4, 3, 2, 1)] (8 filters of size 5, 4 filters of size 3)
+        """
+        super().__init__()
+        # define useful variables of network
+        self.device = device
+        self.input_dim = input_dim
+        self.inchannels = inchannels
+
+        # convolutional parts
+        self.fc_layers = fc_layers
+        self.conv_layers = conv_layers
+        self.num_conv = len(self.conv_layers)
+        self.stride = stride
+        self.avg_pool_size = tuple(avg_pool_size)
+
+        self.activation = nn.LeakyReLU()
+        self.out_activation = nn.Sigmoid()
+        self.drop = nn.Dropout(p=dropout)
+
+        self.conv_layers = nn.Sequential(
+            nn.Conv2d(1, 10, kernel_size=5),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
+            nn.Conv2d(10, 20, kernel_size=5),
+            nn.Dropout(),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
+        )
+        self.fc_layers = nn.Sequential(
+            nn.Linear(320, 50),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(50, 10),
+            nn.Softmax(dim=1),
+        )
+
+    
+
 class CNN(nn.Module):
 
-    def __init__(self, input_dim, fc_layers = [], conv_layers = [], stride = 1, device="cpu", dropout=0.1, inchannels = 1, avg_pool_size=None):
+    def __init__(self, input_dim, fc_layers = [], conv_layers = [], stride = 1, device="cpu", dropout=0.0, inchannels = 1, avg_pool_size=None):
         """
         args
         ----------
@@ -118,7 +170,7 @@ class CNN(nn.Module):
         """forward pass for training"""
         #y = y, (-1, self.inchannels, self.input_dim[0], self.input_dim[1])) if self.num_conv > 0 else y
         conv = self.conv_network(y) if self.num_conv > 0 else y
-        lin_in = torch.flatten(conv,start_dim=1) if self.num_conv > 0 else y   # flatten convolutional layers
+        lin_in = nn.Flatten()(conv) if self.num_conv > 0 else y   # flatten convolutional layers
         out = self.lin_network(lin_in) # run fully connected network
         return out
     
@@ -127,8 +179,9 @@ class CNN(nn.Module):
         num_data = y.size(0)                                                                                                                                                     
         x_out = []
         # encode the data into latent space with r1(z,y)          
-        for i in range(num_data):
-            x_out.append(model.forward(y[i]).cpu().numpy())
+        #for i in range(num_data):
+        #    x_out.append(model.forward(y[i]).cpu().numpy())
+        x_out = model.forward(y).cpu().numpy()
         return np.array(x_out)
 
 

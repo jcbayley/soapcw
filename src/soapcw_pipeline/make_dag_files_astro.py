@@ -9,7 +9,7 @@ import random
 import numpy as np
 from astropy.time import Time
 import json
-from .soap_config_parser import SOAPConfig
+from soapcw.soap_config_parser import SOAPConfig
 
 
 def write_plot_subfile(sub_filename,config,config_file,cdirs,comment,verbose=True):

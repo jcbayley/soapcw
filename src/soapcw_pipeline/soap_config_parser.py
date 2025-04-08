@@ -14,7 +14,7 @@ class SOAPConfig():
         self.int_list = ["strides","fc_layers","img_dim"]
         self.string_list = ["load_directory","save_options"]
         self.tuple_list = ["conv_layers"]
-        self.floats = ["start_time","end_time","band_load_size", "snr_width_line", "snr_width_signal", "prob_line", "left_right_prob", "det1_prob", "det2_prob","snrmin","snrmax","learning_rate","data_load_size"]
+        self.floats = ["tmin","tmax","start_time","end_time","band_load_size", "snr_width_line", "snr_width_signal", "prob_line", "left_right_prob", "det1_prob", "det2_prob","snrmin","snrmax","learning_rate","data_load_size"]
         self.ints = ["memory", "request_disk", "n_jobs", "n_summed_sfts","n_epochs"]
         self.bools = ["resize_image", "overwrite_files"]
 

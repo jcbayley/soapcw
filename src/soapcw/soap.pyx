@@ -10,15 +10,35 @@ from sys import stdout
 from libc.math cimport log,exp,sqrt 
 #from scipy.interpolate import interp2d,RectBivariateSpline
 from scipy.special import logsumexp
+import h5py
 
-class single_detector(object):
+class SOAP(object):
+
+    def __init__(self):
+        
+        self.save_dict = ["vit_track", "max_end_prob", "prev", "vitmap"]
+
+    def save_to_hdf(self,fname):
+
+        with h5py.File(fname, "w") as f:
+            for key in self.save_dict:
+                f.create_dataset(key, data=getattr(self,key))
+
+
+
+
+class single_detector(SOAP):
  
-    def __init__(self, tr, obs, prog = False, lookup_table=None, make_vitmap = True):
+    def __init__(self, tr, obs, prog = False, lookup_table=None, make_vitmap = True, save_dict=None):
         '''
         initialising viterbi class
         '''
+        super().__init__()
         self.prog = prog
-        
+        if self.save_dict is None:
+            self.save_dict = ["vit_track", "max_end_prob", "vitmap"]
+        else:
+            self.save_dict = save_dict
         # make sure input data of right type
         tr = np.array(tr).astype('double')
         obs = np.array(obs).astype('double')
@@ -194,9 +214,9 @@ class single_detector(object):
         self.prev = np.array(prev)
         
 
-class two_detector(object):
+class two_detector(SOAP):
  
-    def __init__(self, tr, obs1, obs2, lookup_table_2det = None, lookup_table_1det = None, prog = False,fractions=None, make_vitmap=True):
+    def __init__(self, tr, obs1, obs2, lookup_table_2det = None, lookup_table_1det = None, prog = False,fractions=None, make_vitmap=True, save_dict=None):
         '''
         viterbi algorithm for two detectors with an optional line aware statistic
         uses S = \frac{p(ss \mid x)}{p(nn \mid x)+p(ns \mid x)+p(sn \mid x)}
@@ -233,11 +253,16 @@ class two_detector(object):
             maximum end path probability
 
         '''
-
+        super().__init__()
         if len(np.shape(obs1)) < 2 or len(np.shape(obs1)) < 2:
             raise Exception("Please input 2D array for observation data")
         if np.shape(obs1) != np.shape(obs2):
             raise Exception("Please make sure teh two input data have the same dimensions")
+
+        if self.save_dict is None:
+            self.save_dict = ["vit_track1", "vit_track2", "vit_track", "max_end_prob", "vitmap"]
+        else:
+            self.save_dict = save_dict
 
         tr = np.array(tr).astype('double')
         obs1 = np.array(obs1).astype('double')

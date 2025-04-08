@@ -106,7 +106,7 @@ def resave_files(p1,p2,ratio,output):
             pickle.dump(save_array,f,protocol=pickle.HIGHEST_PROTOCOL)
 
 
-if __name__ == "__main__":
+def main():
 
     parser = argparse.ArgumentParser(
                     prog = 'SOAP lookup table generation',
@@ -136,7 +136,8 @@ if __name__ == "__main__":
     if not args.amp_stat:
         if args.make_all:
             for det in [1,2]:
-                for nsft, mpower in [(48, 150),(96, 250),(144, 360),(192,470)]:
+                #for nsft, mpower in [(48, 150),(96, 250),(144, 360),(192,470)]:
+                for nsft, mpower in [(48, 130),(96, 250),(144, 350),(192,450)]:
                     save_lookup(args.signal_prior_width,
                         args.line_prior_width,
                         args.noise_line_ratio,
@@ -178,3 +179,7 @@ if __name__ == "__main__":
                         ndet = args.ndet, 
                         pow_range = (args.pow_min,args.pow_max,args.n_powers), 
                         frac_range = (args.frac_min,args.frac_max,args.n_fracs))
+
+
+if __name__ == "__main__":
+    main()

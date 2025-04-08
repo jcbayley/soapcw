@@ -2,7 +2,7 @@
 from __future__ import print_function
 import matplotlib
 matplotlib.use("agg")
-import soapcw as soap
+import soapcw as soapcw
 from soapcw import cw
 import sys
 import os
@@ -20,7 +20,7 @@ import fcntl
 import torch
 import lalpulsar
 import lal
-from .soap_config_parser import SOAPConfig
+from soapcw.soap_config_parser import SOAPConfig
 from collections import OrderedDict
 
 def set_limit(data,cut=180):
@@ -124,18 +124,19 @@ def run_soap_twodet(
         amp="amp"
     else:
         amp=""
-    lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]}_{config["lookuptable"]["snr_width_signal"]}_{config["lookuptable"]["prob_line"]}.pkl')
-    lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]}_{config["lookuptable"]["snr_width_signal"]}_{config["lookuptable"]["prob_line"]}.pkl')
+    lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
+    lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
 
     # define the transition matrix for soap
-    if config["transitionmatrix"]["extra_left_right"] == False:
-        tr = soap.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
+    print(config["transitionmatrix"]["extra_left_right"], config["transitionmatrix"]["left_right_prob"],config["transitionmatrix"]["det1_prob"],config["transitionmatrix"]["det2_prob"])
+    if config["transitionmatrix"]["extra_left_right"] in [False, "false"]:
+        tr = soapcw.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
                                             config["transitionmatrix"]["det1_prob"],
                                             config["transitionmatrix"]["det2_prob"],
                                             log=True)
     else:
-        tr = soap.tools.transition_matrix_2d_5jump(config["transitionmatrix"]["left_right_prob"],
-                                                0.5*config["transitionmatrix"]["left_right_prob"],
+        tr = soapcw.tools.transition_matrix_2d_5jump(config["transitionmatrix"]["left_right_prob"],
+                                                config["transitionmatrix"]["extra_left_right"]*config["transitionmatrix"]["left_right_prob"],
                                                 config["transitionmatrix"]["det1_prob"],
                                                 config["transitionmatrix"]["det2_prob"],
                                                 log=True)
@@ -143,17 +144,19 @@ def run_soap_twodet(
 
     # run soap search using the two detector line aware statistic (one detector in gaps)
 
+    print(tr)
+
     if len(getattr(sft,"det_names")) == 2:
         # SOAP using SNR based statistic
         if config["lookuptable"]["lookup_type"] == "power":
-            soaprun = soap.two_detector(tr,sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],lookup_table_2det=lookup_2,lookup_table_1det=lookup_1)
+            soaprun = soapcw.two_detector(tr,sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],lookup_table_2det=lookup_2,lookup_table_1det=lookup_1)
         elif config["lookuptable"]["lookup_type"] == "amplitude":
             # SOAP using amplitude statistics
             # get the ratio of duty cycle and noise floor of the two detectors (used if using amplitude based statistic_
             fractions = 1./(sft.L1.summed_dutycycle*sft.H1.summed_rng_med/(sft.H1.summed_dutycycle*sft.L1.summed_rng_med))
             # where there is no data (i.e. nans) set the detectors to equal sensitivity
             fractions[np.isnan(fractions)] = 1
-            soaprun = soap.two_detector(tr,sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],lookup_table_2det=lookup_2,fractions = fractions)
+            soaprun = soapcw.two_detector(tr,sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],lookup_table_2det=lookup_2,fractions = fractions)
 
     else:
         raise Exception(f"Only runs for two detectors currently, you have: {getattr(sft, 'det_names')}")
@@ -255,11 +258,11 @@ def plot_setup(
     imv = ax[2].imshow(soaprun.vitmap.T,cmap="cividis",aspect="auto",origin="lower", interpolation="none")
             
     # plot track power s
-    Hpwline, = ax[3].plot(np.arange(sum_nsft),np.array(soap.tools.track_power(soaprun.vit_track1,H_temp_sft)),color="C3",label="H1")
-    Lpwline, = ax[3].plot(np.arange(sum_nsft),np.array(soap.tools.track_power(soaprun.vit_track2,L_temp_sft)),color="C2",label="L1")
+    Hpwline, = ax[3].plot(np.arange(sum_nsft),np.array(soapcw.tools.track_power(soaprun.vit_track1,H_temp_sft)),color="C3",label="H1")
+    Lpwline, = ax[3].plot(np.arange(sum_nsft),np.array(soapcw.tools.track_power(soaprun.vit_track2,L_temp_sft)),color="C2",label="L1")
 
     # plot viterbi statistic
-    Hstatline, = ax[4].plot(np.arange(sum_nsft),np.array(soap.tools.stat_on_path(soaprun.vit_track,soaprun.V)),color="C3",label="H1")
+    Hstatline, = ax[4].plot(np.arange(sum_nsft),np.array(soapcw.tools.stat_on_path(soaprun.vit_track,soaprun.V)),color="C3",label="H1")
             
     # plot noise 
     Hnoise, = ax[5].plot(np.arange(sum_nsft),temp_noise["H1"],color="C3",label="H1")
@@ -361,13 +364,13 @@ def update_plot(fig, ax, H_im, L_im, imv, Hnoise, Lnoise, Hpwline, Lpwline, Hsta
     ax[5].autoscale_view()
     
     # set the new data and limits for the track power plot
-    Hpwline.set_ydata(soap.tools.track_power(soaprun.vit_track1,H_temp_sft))
-    Lpwline.set_ydata(soap.tools.track_power(soaprun.vit_track2,L_temp_sft))
+    Hpwline.set_ydata(soapcw.tools.track_power(soaprun.vit_track1,H_temp_sft))
+    Lpwline.set_ydata(soapcw.tools.track_power(soaprun.vit_track2,L_temp_sft))
     ax[3].relim()
     ax[3].autoscale_view()
 
     # set the new data and limits for the vitstat plot
-    Hstatline.set_ydata(soap.tools.stat_on_path(soaprun.vit_track,soaprun.V))
+    Hstatline.set_ydata(soapcw.tools.stat_on_path(soaprun.vit_track,soaprun.V))
     ax[4].relim()
     ax[4].autoscale_view()
     
@@ -399,8 +402,14 @@ def write_locked_file(filepath, data, write_type="rb"):
                 time.sleep(0.1)
     return total_data
 
+def get_band_limits(config, fmin, fmax):
 
-def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
+    for band in range(len(config.get("data","band_starts"))):
+        if fmin >= config.get("data","band_starts")[band] and fmin <= config.get("data","band_ends")[band]:
+            return config.get("data","band_starts")[band], config.get("data","band_ends")[band]
+
+
+def run_soap_in_band(config, minfreq, maxfreq, verbose = False, config_file=None):
     """_summary_
 
     Args:
@@ -427,6 +436,11 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
     outpath = os.path.join(outpath,config["output"]["sub_directory"])
     outpath_save = outpath
 
+    if config_file is not None:
+        config_file_copy = os.path.join(outpath_save, os.path.basename(config_file))
+        with open(config_file, 'r') as src, open(config_file_copy, 'w') as dst:
+            dst.write(src.read())
+
     if os.path.isdir(outpath_save):
         pathexists = True
     else:
@@ -442,26 +456,32 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
         else:
             pass
 
+    bandmin, bandmax = get_band_limits(config, minfreq, maxfreq)
+
     #print(sftfiles)
     sftfiles = config["input"]["load_directory"]
     print("num files: ", len(sftfiles))
     start_load = time.time()
 
-    sft_filelists = get_sft_files_find(outpath, sftfiles, config["output"]["overwrite_files"])
+    sft_filelists = get_sft_files_find(outpath, sftfiles, config.getboolean("output","overwrite_files"))
 
     sftlist = []
     for sftfile in sft_filelists:
         with open(sftfile,"r") as f:
             sftlist.extend(f.readlines())
 
+
+    print(sftlist[0])
     sttime = [float(os.path.basename(name).split("-")[-2]) for name in sftlist]
 
     print("numsfts: {}".format(len(sftlist)))
     print("Time find fnames: ", time.time() - start_load)
+
     if config["data"]["start_time"] not in [False, "None", "none", None, -1]:
         tmin = config["data"]["start_time"]
     else:
         tmin = np.min(sttime) 
+
     if config["data"]["end_time"] not in [False, "None", "none", None, -1]:
         tmax = config["data"]["end_time"]
     else:
@@ -588,17 +608,25 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
         
         # if cnn model provided run the cnn on viterbi map  
         st_cnn = time.time()    
-        if config["cnn"]["vitmapmodel_path"] is not None:
-            vitmap_cnn_prob = run_vitmap_cnn(os.path.join(config["cnn"]["vitmapmodel_path"],"{}_model.pt".format(train_band_type)), soaprun.vitmap)
+        if config.getboolean("general","run_vitmap"):
+            print("Running CNN on viterbi map")
+            vitmap_cnn_prob = run_vitmap_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_vitmap_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap)
             table_save_data["CNN_vitmap_stat"] = float(vitmap_cnn_prob)
-        if config["cnn"]["spectmodel_path"] is not None:
-            spect_cnn_prob = run_spect_cnn(os.path.join(config["cnn"]["spectmodel_path"],"{}_model.pt".format(train_band_type)), sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], degfree = degfree)
+        if config.getboolean("general","run_spect"):
+            print("Running CNN on SFTs")
+            spect_cnn_prob = run_spect_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_spectrogram_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], degfree = degfree)
             table_save_data["CNN_spect_stat"] = float(spect_cnn_prob)
-        if config["cnn"]["vitmapstatmodel_path"] is not None:
-            vitmapstat_cnn_prob = run_vitmapstat_cnn(os.path.join(config["cnn"]["vitmapstatmodel_path"],"{}_model.pt".format(train_band_type)), soaprun.vitmap, soaprun.max_end_prob)
+        if config.getboolean("general","run_vitmapstat"):
+            print("Running CNN on viterbi map and viterbi stat")
+            vitmapstat_cnn_prob = run_vitmapstat_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_vitmapstat_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap, soaprun.max_end_prob)
             table_save_data["CNN_vitmapstat_stat"] = float(vitmapstat_cnn_prob)
-        if config["cnn"]["allmodel_path"] is not None:
-            all_cnn_prob = run_all_cnn(os.path.join(config["cnn"]["allmodel_path"],"{}_model.pt".format(train_band_type)), soaprun.vitmap, sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], soaprun.max_end_prob, degfree = degfree)
+        if config.getboolean("general","run_vitmapspect"):
+            all_cnn_prob = run_vitmapspect_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_vitmapspectrogram_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap, sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], soaprun.max_end_prob, degfree = degfree)
+            table_save_data["CNN_vitmapspect"] = float(all_cnn_prob)
+            print("Running CNN on viterbi map and SFTs", float(all_cnn_prob))
+        if config.getboolean("general","run_all"):
+            print("Running CNN on all")
+            all_cnn_prob = run_all_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_all_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap, sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], soaprun.max_end_prob, degfree = degfree)
             table_save_data["CNN_all_stat"] = float(all_cnn_prob[0])
 
         table_save_data["plot_path"] = save_path_track
@@ -715,7 +743,7 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False):
      
     # write table of statistics 
     tablefile = os.path.join(output_save_files,f"table_{minfreq}_{maxfreq}.hdf5")
-    if os.path.isfile(tablefile) and config["output"]["overwrite_files"] == False:
+    if os.path.isfile(tablefile) and config.getboolean("output","overwrite_files") == False:
         new_tablefile = os.path.join(output_save_files,f"table_{minfreq}_{maxfreq}_{np.random.randint(low=0,high=1000)}.hdf5")
         print(f"File exists: {tablefile}, writing to {new_tablefile}")
         tablefile = new_tablefile
@@ -853,7 +881,8 @@ def run_all_cnn(modelfname, vit_data, H_data, L_data, vit_stat, size = (156,89),
     run the cnn
     """
     #model = load_model(modelfname)
-    model = torch.load(modelfname, map_location="cpu").to("cpu")
+    #model = torch.load(modelfname, map_location="cpu").to("cpu")
+    model, conf = soapcw.cnn.pytorch.load_model_from_config(weights, device="cpu")
 
     vit_resize = resize(vit_data, size, anti_aliasing=True)
     H_resize = resize(H_data, size, anti_aliasing=True)
@@ -873,6 +902,35 @@ def run_all_cnn(modelfname, vit_data, H_data, L_data, vit_stat, size = (156,89),
     with torch.no_grad():
 
         prob = model.test(torch.Tensor([vit_resize,]), torch.Tensor([spect_dat,]), torch.Tensor([vit_stat,]) )
+
+    return prob[0][0]
+
+def run_vitmapspect_cnn(modelfname, vit_data, H_data, L_data, size = (156,89), degfree = 96):
+    """
+    run the cnn
+    """
+    #model = load_model(modelfname)
+    #model = torch.load(modelfname, map_location="cpu").to("cpu")
+    model, conf = soapcw.cnn.pytorch.load_model_from_config(modelfname, device="cpu")
+
+    vit_resize = vit_data#resize(vit_data, size, anti_aliasing=True)
+    H_resize = H_data#resize(H_data, size, anti_aliasing=True)
+    L_resize = L_data#resize(L_data, size, anti_aliasing=True)
+
+    vit_resize = vit_resize/vit_resize.max()
+    H_resize = (H_resize - degfree)/(2*degfree)
+    L_resize = (L_resize - degfree)/(2*degfree)
+
+    vit_resize = vit_resize.reshape(1, vit_resize.shape[0],vit_resize.shape[1])
+    H_resize = H_resize.reshape(1,H_resize.shape[0],H_resize.shape[1])
+    L_resize = L_resize.reshape(1,L_resize.shape[0],L_resize.shape[1])
+    
+    spect_dat = torch.from_numpy(np.vstack([H_resize, L_resize, vit_resize]))
+    spect_dat = spect_dat.permute(0,2,1).to(torch.float32)
+
+    model.eval()
+    with torch.no_grad():
+        prob = model.test(spect_dat.unsqueeze(0))
 
     return prob[0][0]
 
@@ -930,7 +988,7 @@ def main():
         cfg["input"]["load_directory"] = sftpath
 
 
-    run_soap_in_band(cfg, args.start_freq, args.end_freq)
+    run_soap_in_band(cfg, args.start_freq, args.end_freq, config_file=args.config_file)
 
 if __name__ == "__main__":
     main()
