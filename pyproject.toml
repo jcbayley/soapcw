@@ -51,7 +51,8 @@ dependencies = [
     "regex",
     "importlib_resources",
     "requests",
-    "pandas"
+    "pandas",
+    "pyfstat"
     ]
 
 
