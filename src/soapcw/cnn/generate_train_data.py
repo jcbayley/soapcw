@@ -383,7 +383,7 @@ def loop_band_train_augment(
                         raise Exception(f"temp data has no data: {fname}")
                     """
                     f.create_dataset("parnames", data = parkeys)
-                    f.create_dataset("pars", data = np.array([[td[key] for key in parkeys] for td in temp_data[key]]))
+                    f.create_dataset("pars", data = np.array([[td[key2] for key2 in parkeys] for td in temp_data[key]]))
                 else:
                     try:
                         f.create_dataset(key, shape=np.shape(temp_data[key]), data=np.array(temp_data[key]))
@@ -509,6 +509,7 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         noise_outputs["pars"]["tref"] = tstart
         noise_outputs["pars"]["snr"] = 0
         noise_outputs["pars"]["h0"] = 0
+        noise_outputs["pars"]["logh0"] = -np.inf
         noise_outputs["pars"]["depth"] = np.inf
         noise_outputs["pars"]["av_sh"] = np.nanmedian(av_sh)
         noise_outputs["pars"]["width"] = width
@@ -599,14 +600,15 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
 
     epochs = data.H1.summed_epochs
 
-    h0 = np.sqrt(np.nanmedian(av_sh))/data.depth
+    #h0 = np.sqrt(np.nanmedian(av_sh))/data.depth
 
     inj_track = (sig.get_pulsar_path(epochs,"H1") - sig.fmin)*data.tsft
 
     pars["tref"] = tstart
     pars["snr"] = snr
     pars["av_sh"] = np.nanmedian(av_sh)
-    pars["h0"] = h0
+    pars["h0"] = data.h0
+    pars["logh0"] = np.log10(data.h0)
     pars["depth"] = data.depth
     pars["fmin"] = fmin
     pars["fmax"] = fmax
@@ -623,7 +625,7 @@ def run_and_inj(config, datah,datal,fmin,width,resize_image=False,av_sh=None,gen
         fmax=fmax,
         snr=snr,
         depth=data.depth,
-        h0=h0,
+        h0=data.h0,
         resize_image=resize_image,
         pars=pars,
         inj_track=inj_track,

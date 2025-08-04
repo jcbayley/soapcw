@@ -259,6 +259,7 @@ class LoadData(torch.utils.data.Dataset):
         self.sort_filenames = sort_filenames
 
         if hwinj_file is not None:
+            print("Loading hardware injections from: ", hwinj_file)
             self.hardware_injections = pd.read_html(hwinj_file, header=0)[0]
         else:
             self.hardware_injections = None
@@ -768,7 +769,7 @@ def main():
     parser.add_argument("-lm", "--load-model", help="load model from path", default=None)
     parser.add_argument("-lr", "--learning-rate", help="learning rate", default=None, type=float)
     parser.add_argument("-nu", "--n-updates-per-batch", help="number of updates per batch", default=1, type=int)
-    parser.add_argument("-ne", "--n-epochs", help="number of epochs", default=10, type=int)
+    parser.add_argument("-ne", "--n-epochs", help="number of epochs", default=100, type=int)
     device = "cuda:0"
                                                     
     args = parser.parse_args()  
@@ -779,7 +780,8 @@ def main():
     from soapcw.soap_config_parser import SOAPConfig
 
     if args.config_file is not None:
-        cfg = SOAPConfig(args.config_file)
+        print(os.path.abspath(args.config_file))
+        cfg = SOAPConfig(os.path.abspath(args.config_file))
 
     if args.band_type is not None:
         bandtypes = [str(args.band_type), ]
@@ -804,6 +806,8 @@ def main():
 
     if args.n_epochs is not None:
         cfg["cnn_model"]["n_epochs"] = str(args.n_epochs)
+
+    print(cfg.get("input", "hardware_injections"))
 
     for bandtype in bandtypes:
         train_model(cfg["cnn_model"]["model_type"], 

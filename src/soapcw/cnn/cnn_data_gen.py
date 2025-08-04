@@ -109,19 +109,19 @@ def return_outputs(
             amp="amp"
         else:
             amp=""
-        lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
-        lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
+        lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["signal_prior_width"]:.1f}_{config["lookuptable"]["line_prior_width"]:.1f}_{config["lookuptable"]["noise_line_model_ratio"]:.1f}.pkl')
+        lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["signal_prior_width"]:.1f}_{config["lookuptable"]["line_prior_width"]:.1f}_{config["lookuptable"]["noise_line_model_ratio"]:.1f}.pkl')
 
         # define the transition matrix for soap
 
-        if config["transitionmatrix"]["extra_left_right"] in [False, 0, "false"]:
+        if config["transitionmatrix"]["extra_left_right_factor"] in [False, 0, "false"]:
             tr = soapcw.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
                                                 config["transitionmatrix"]["det1_prob"],
                                                 config["transitionmatrix"]["det2_prob"],
                                                 log=True)
         else:
             tr = soapcw.tools.transition_matrix_2d_5jump(config["transitionmatrix"]["left_right_prob"],
-                                                    config["transitionmatrix"]["extra_left_right"]*config["transitionmatrix"]["left_right_prob"],
+                                                    config["transitionmatrix"]["extra_left_right_factor"]*config["transitionmatrix"]["left_right_prob"],
                                                     config["transitionmatrix"]["det1_prob"],
                                                     config["transitionmatrix"]["det2_prob"],
                                                     log=True)

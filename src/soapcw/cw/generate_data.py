@@ -1495,9 +1495,11 @@ class SimulateSpectrogramfromSFT(SimulateGaussianNoiseSpectrogram):
             det (_type_): _description_
             sftpath (_type_): _description_
         """
-        label = f"PyFstatExampleMCMCSearchUsingInitialisation"
+        label = f"pyfstat"
 
-        outdir = os.path.join(f"PyFstat_temp_data_{self.fmin}", label)
+        rootpath = os.getcwd()
+
+        outdir = os.path.join(rootpath, f"PyFstat_temp_data_{self.fmin}")
 
         logger = pyfstat.set_up_logger(label=label, outdir=outdir)
 
@@ -1547,6 +1549,9 @@ class SimulateSpectrogramfromSFT(SimulateGaussianNoiseSpectrogram):
         writer.make_data()
 
         frequency, timestamps, amplitudes = pyfstat.utils.get_sft_as_arrays(writer.sftfilepath, fMin=np.round(self.fmin*self.tsft)/self.tsft, fMax=np.round(self.fmax*self.tsft)/self.tsft)
+
+        for fname in writer.sftfilepath.split(";"):
+            os.remove(fname)
 
         for det in self.det_names:
             getattr(self, det).sft += amplitudes[det].T

@@ -24,7 +24,7 @@ def load_model_from_config(weights_file, config=None, device="cpu"):
     if config is not None:
         config = soapcw.soap_config_parser.SOAPConfig(config)
 
-    pre_model_weights = torch.load(weights_file, map_location=device)
+    pre_model_weights = torch.load(weights_file, map_location=device, weights_only=False)
 
     model_soap = soapcw.cnn.pytorch.models.CNN(
         input_dim=pre_model_weights["input_dim"],               # the size of the input image

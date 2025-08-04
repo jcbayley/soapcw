@@ -113,13 +113,14 @@ def main():
                     description = 'generates lookup tables for SOAP',)
 
     parser.add_argument('--amp-stat',action='store_true') 
-    parser.add_argument('-s', '--signal-prior-width', required=True, type=float) 
-    parser.add_argument('-l', '--line-prior-width', required=True, type=float) 
-    parser.add_argument('-n', '--noise-line-ratio', required=True, type=float) 
+    parser.add_argument('-c', '--config-file', required=False, type=str)
+    parser.add_argument('-s', '--signal-prior-width', required=False, type=float) 
+    parser.add_argument('-l', '--line-prior-width', required=False, type=float) 
+    parser.add_argument('-n', '--noise-line-ratio', required=False, type=float) 
     parser.add_argument('-ndet', '--ndet', default=2, required=False, type=int) 
     parser.add_argument('-k', default=2, required=False, type=int) 
     parser.add_argument('-N', '--num-sfts', default=48, required=False, type=int) 
-    parser.add_argument('-o', '--save-dir', required=True, type=str) 
+    parser.add_argument('-o', '--save-dir', required=False, type=str) 
     
     parser.add_argument('-pmin', '--pow-min', default=1, required=False, type=float) 
     parser.add_argument('-pmax', '--pow-max', default=400, required=False, type=float) 
@@ -133,52 +134,92 @@ def main():
 
     args = parser.parse_args()
 
+
+    from soapcw.soap_config_parser import SOAPConfig
+
+    if args.config_file is not None:
+        cfg = SOAPConfig(args.config_file)
+
+    else:
+        cfg = {"lookuptable": {}}
+        
+    if args.amp_stat:
+        cfg["lookuptable"]["lookup_type"] = "amplitude"
+
+    if args.signal_prior_width is not None:
+        cfg["lookuptable"]["signal_prior_width"] = args.signal_prior_width
+    if args.line_prior_width is not None:
+        cfg["lookuptable"]["line_prior_width"] = args.line_prior_width
+    if args.noise_line_ratio is not None:
+        cfg["lookuptable"]["noise_line_model_ratio"] = args.noise_line_ratio
+    if args.ndet is not None:
+        cfg["lookuptable"]["ndet"] = str(args.ndet)
+    if args.k is not None:
+        cfg["lookuptable"]["k"] = str(args.k)
+    if args.num_sfts is not None:
+        cfg["lookuptable"]["num_sfts"] = str(args.num_sfts)
+    if args.save_dir is not None:
+        cfg["lookuptable"]["lookup_dir"] = args.save_dir
+    if args.pow_min is not None:
+        cfg["lookuptable"]["pow_min"] = str(args.pow_min)
+    if args.pow_max is not None:
+        cfg["lookuptable"]["pow_max"] = str(args.pow_max)
+    if args.n_powers is not None:
+        cfg["lookuptable"]["n_powers"] = str(args.n_powers)
+    if args.frac_min is not None:
+        cfg["lookuptable"]["frac_min"] = str(args.frac_min)
+    if args.frac_max is not None:
+        cfg["lookuptable"]["frac_max"] = str(args.frac_max)
+    if args.n_fracs is not None:
+        cfg["lookuptable"]["n_fracs"] = str(args.n_fracs)
+
     if not args.amp_stat:
         if args.make_all:
             for det in [1,2]:
                 #for nsft, mpower in [(48, 150),(96, 250),(144, 360),(192,470)]:
                 for nsft, mpower in [(48, 130),(96, 250),(144, 350),(192,450)]:
-                    save_lookup(args.signal_prior_width,
-                        args.line_prior_width,
-                        args.noise_line_ratio,
-                        args.save_dir,
-                        k = args.k,
+                    save_lookup(cfg["lookuptable"]["signal_prior_width"],
+                        cfg["lookuptable"]["line_prior_width"],
+                        cfg["lookuptable"]["noise_line_model_ratio"],
+                        cfg["lookuptable"]["lookup_dir"],
+                        k = cfg["lookuptable"]["k"],
                         N = nsft,
                         ndet=det,
-                        pow_range = (args.pow_min,mpower,args.n_powers))
+                        pow_range = (cfg["lookuptable"]["pow_min"],mpower,cfg["lookuptable"]["n_powers"]))
         else:
-            save_lookup(args.signal_prior_width,
-                    args.line_prior_width,
-                    args.noise_line_ratio,
-                    args.save_dir,
-                    k = args.k,
-                    N = args.num_sfts,
-                    ndet=args.ndet,
-                    pow_range = (args.pow_min,args.pow_max,args.n_powers))
+            save_lookup(cfg["lookuptable"]["signal_prior_width"],
+                    cfg["lookuptable"]["line_prior_width"],
+                    cfg["lookuptable"]["noise_line_model_ratio"],
+                    cfg["lookuptable"]["lookup_dir"],
+                    k = cfg["lookuptable"]["k"],
+                    N = cfg["lookuptable"]["num_sfts"],
+                    ndet=cfg["lookuptable"]["ndet"],
+                    pow_range = (cfg["lookuptable"]["pow_min"],cfg["lookuptable"]["pow_min"],cfg["lookuptable"]["n_powers"]))
     else:
         if args.make_all:
             for det in [1,2]:
                 for nsft, mpower in [(48, 150),(96, 250),(144, 360),(192,470)]:
-                    save_lookup_amp(args.signal_prior_width,
-                        args.line_prior_width,
-                        args.noise_line_ratio,
-                        args.save_dir, 
-                        k=args.k,
-                        N=nsft,
-                        ndet = args.ndet, 
-                        pow_range = (args.pow_min,mpower,args.n_powers), 
-                        frac_range = (args.frac_min,args.frac_max,args.n_fracs))
+                    save_lookup_amp(cfg["lookuptable"]["signal_prior_width"],
+                        cfg["lookuptable"]["line_prior_width"],
+                        cfg["lookuptable"]["noise_line_model_ratio"],
+                        cfg["lookuptable"]["lookup_dir"],
+                        k = cfg["lookuptable"]["k"],
+                        N = nsft,
+                        ndet=det,
+                        pow_range = (cfg["lookuptable"]["pow_min"],mpower,cfg["lookuptable"]["n_powers"]),
+                        frac_range = (cfg["lookuptable"]["frac_min"],cfg["lookuptable"]["frac_max"],cfg["lookuptable"]["n_fracs"]))
 
         else:
-            save_lookup_amp(args.signal_prior_width,
-                        args.line_prior_width,
-                        args.noise_line_ratio,
-                        args.save_dir, 
-                        k=args.k,
-                        N=args.num_sfts,
-                        ndet = args.ndet, 
-                        pow_range = (args.pow_min,args.pow_max,args.n_powers), 
-                        frac_range = (args.frac_min,args.frac_max,args.n_fracs))
+            save_lookup_amp(cfg["lookuptable"]["signal_prior_width"],
+                    cfg["lookuptable"]["line_prior_width"],
+                    cfg["lookuptable"]["noise_line_model_ratio"],
+                    cfg["lookuptable"]["lookup_dir"],
+                    k = cfg["lookuptable"]["k"],
+                    N = cfg["lookuptable"]["num_sfts"],
+                    ndet=cfg["lookuptable"]["ndet"],
+                    pow_range = (cfg["lookuptable"]["pow_min"],cfg["lookuptable"]["pow_min"],cfg["lookuptable"]["n_powers"]),
+                    frac_range = (cfg["lookuptable"]["frac_min"],cfg["lookuptable"]["frac_max"],cfg["lookuptable"]["n_fracs"]))
+
 
 
 if __name__ == "__main__":

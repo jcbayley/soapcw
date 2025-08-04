@@ -34,6 +34,8 @@ class SOAPConfig(SOAPConfigParser):
     def __init__(self, config_file, **kwargs):
         super().__init__(self, **kwargs)
         logger.info(f"Loading config from: {config_file}")
+        if not os.path.exists(config_file):
+            logger.warning(f"Config file {config_file} does not exist. Using default config.")
         self.read(config_file)
         self.config_file = os.path.abspath(config_file)
 

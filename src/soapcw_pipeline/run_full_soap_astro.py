@@ -124,19 +124,18 @@ def run_soap_twodet(
         amp="amp"
     else:
         amp=""
-    lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
-    lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["snr_width_line"]:.1f}_{config["lookuptable"]["snr_width_signal"]:.1f}_{config["lookuptable"]["prob_line"]:.1f}.pkl')
+    lookup_1 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_1det_{degfree}degfree_{config["lookuptable"]["signal_prior_width"]:.1f}_{config["lookuptable"]["line_prior_width"]:.1f}_{config["lookuptable"]["noise_line_model_ratio"]:.1f}.pkl')
+    lookup_2 = os.path.join(config["lookuptable"]["lookup_dir"], f'log_signoiseline{amp}_2det_{degfree}degfree_{config["lookuptable"]["signal_prior_width"]:.1f}_{config["lookuptable"]["line_prior_width"]:.1f}_{config["lookuptable"]["noise_line_model_ratio"]:.1f}.pkl')
 
     # define the transition matrix for soap
-    print(config["transitionmatrix"]["extra_left_right"], config["transitionmatrix"]["left_right_prob"],config["transitionmatrix"]["det1_prob"],config["transitionmatrix"]["det2_prob"])
-    if config["transitionmatrix"]["extra_left_right"] in [False, "false"]:
+    if config["transitionmatrix"]["extra_left_right_factor"] in [False, "false"]:
         tr = soapcw.tools.transition_matrix_2d(config["transitionmatrix"]["left_right_prob"],
                                             config["transitionmatrix"]["det1_prob"],
                                             config["transitionmatrix"]["det2_prob"],
                                             log=True)
     else:
         tr = soapcw.tools.transition_matrix_2d_5jump(config["transitionmatrix"]["left_right_prob"],
-                                                config["transitionmatrix"]["extra_left_right"]*config["transitionmatrix"]["left_right_prob"],
+                                                config["transitionmatrix"]["extra_left_right_factor"]*config["transitionmatrix"]["left_right_prob"],
                                                 config["transitionmatrix"]["det1_prob"],
                                                 config["transitionmatrix"]["det2_prob"],
                                                 log=True)
@@ -822,7 +821,7 @@ def run_vitmap_cnn(modelfname, vit_data, size = (156,89)):
     run the cnn
     """
     #model = load_model(modelfname)
-    model = torch.load(modelfname, map_location="cpu").to("cpu")
+    model = torch.load(modelfname, map_location="cpu", weights_only=False).to("cpu")
     
     vit_resize = resize(vit_data, size, anti_aliasing=True)
 
@@ -840,7 +839,7 @@ def run_vitmapstat_cnn(modelfname, vit_data, vit_stat, size = (156,89)):
     run the cnn
     """
     #model = load_model(modelfname)
-    model = torch.load(modelfname, map_location="cpu").to("cpu")
+    model = torch.load(modelfname, map_location="cpu", weights_only=False).to("cpu")
     
     vit_resize = resize(vit_data, size, anti_aliasing=True)
 
@@ -858,7 +857,7 @@ def run_spect_cnn(modelfname, H_data, L_data, size = (156,89), degfree = 96):
     run the cnn
     """
     #model = load_model(modelfname)
-    model = torch.load(modelfname, map_location="cpu").to("cpu")
+    model = torch.load(modelfname, map_location="cpu", weights_only=False).to("cpu")
     
     H_resize = resize(H_data, size, anti_aliasing=True)
     L_resize = resize(L_data, size, anti_aliasing=True)

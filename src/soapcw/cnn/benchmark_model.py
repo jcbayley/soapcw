@@ -195,9 +195,9 @@ def run_model(
     load_types = ["vit_imgs", "H_imgs", "L_imgs", "stats"]
     print(f"Loading data from {train_noise_dir} and {train_signal_dir}")
 
-    test_data = soapcw.cnn.train_model.LoadData(train_noise_dir, train_signal_dir, load_types=load_types, shuffle=True, nfile_load=n_test)
+    test_data = soapcw.cnn.train_model.LoadData(train_noise_dir, train_signal_dir, load_types=load_types, shuffle=False, nfile_load=n_test)
 
-    test_dataset = torch.utils.data.DataLoader(test_data, batch_size=128, shuffle=True)
+    test_dataset = torch.utils.data.DataLoader(test_data, batch_size=128, shuffle=False)
 
 
     img_dim = np.array(test_data.get_image_size()[1:])[::-1]
@@ -244,7 +244,7 @@ def run_model(
         test_losses = []
         test_pars = {}
         for pname in test_data.parkeys:
-                test_pars.setdefault(pname, [])
+            test_pars.setdefault(pname, [])
         test_labels = []
         test_statistic = []
         test_lineaware = []
@@ -294,8 +294,10 @@ def run_model(
             f.create_dataset("lineaware_statistic", data=np.array(test_lineaware))
             f.create_dataset("lineaware_sensitivity", data=np.column_stack((line_snr_range, line_sensitivity)))
             f.create_dataset("cnn_sensitivity", data=np.column_stack((cnn_snr_range, cnn_sensitivity)))
-            for pname, pval in test_pars.items():
-                f.create_dataset(pname, data=pval)
+            for i, pname in enumerate(test_data.parkeys):
+                f.create_dataset(pname, data=test_data.all_pars[:,i])
+                if pname == "h0":
+                    f.create_dataset("logh0", data=np.log10(test_data.all_pars[:,i]))
 
     print("Making plots ...")
     fig, ax = plt.subplots()
