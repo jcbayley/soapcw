@@ -85,7 +85,7 @@ class GenerateSignal:
         self.cosi = cosi
         self.h0 = h0
         self.f = f
-        self.tref = None
+        self.tref = tref
 
         self.gaps = False
         self.snr = snr
@@ -118,19 +118,19 @@ class GenerateSignal:
         else:
             self._sun_ephem = sun_ephem
 
-    def param_check(self):
-        for i, v in enumerate(params[:-2]):
-            if np.isnan(v):
-                raise Exception("parameter {} is not a valid value".format(params_names[i]))
-
-        if self.tref is None:
-            print("No reference time: Pulsar referece time same as sft start time")
-            self.tref = self.tstart
-
     def get_baryinput(self, detector):
         """
         Load in the baryinputs prior to running
         """
+        if not hasattr(self, "baryinputs"):
+            self.baryinputs = {}
+        if not hasattr(self, "siteinfo"):
+            self.siteinfo = {}
+        if not hasattr(self, "earth"):
+            self.earth = lalpulsar.EarthState()
+        if not hasattr(self, "emit"):
+            self.emit = lalpulsar.EmissionTime()
+
         baryinput = lalpulsar.BarycenterInput()
         if detector == "SSB":
             # set up the for reference frame at center of earth
@@ -164,6 +164,13 @@ class GenerateSignal:
         """
 
         # initialise the barycenter structure
+        if not hasattr(self, "baryinputs"):
+            self.baryinputs = {}
+        if not hasattr(self, "earth"):
+            self.earth = lalpulsar.EarthState()
+        if not hasattr(self, "emit"):
+            self.emit = lalpulsar.EmissionTime()
+
         if detector not in self.baryinputs.keys():
             self.baryinputs[detector] = self.get_baryinput(detector)
 
@@ -723,7 +730,7 @@ class SimulateTimeseries:
         if self.snr is not None and self.snr >= 0 and self.Sn is not None:
             h0_bar = 1
             snr_bar = 0
-            for dt in dets:
+            for dt in detectors:
                 if self.snr != 0:
                     snr_bar += np.nansum(
                         self._parent.get_snr2(
@@ -794,7 +801,7 @@ class SimulateGaussianNoiseSpectrogram:
         return self.__dict__[name]
 
     def fresnel_power(self, f, f0, tsft, alp):
-        """
+        r"""
         gives the Fresnel integrals for the fourier transform of a signal with changing frequency.
         ---------
         args
@@ -1009,7 +1016,7 @@ class SimulateGaussianNoiseSpectrogram:
         elif self.h0 is not None and self.Sn is not None:
             self.h0 = self.h0
         else:
-            raise Exeption("Please define either snr or h0 and Sn")
+            raise Exception("Please define either snr or h0 and Sn")
 
         self.harmonic_sum_Sn = 0
         # simulate the spectrogram for each detector
@@ -1197,7 +1204,7 @@ class SimulateGaussianNoiseSpectrogram:
                     antenna=antenna,
                 )
             )
-            # set snr to 0 if all elemts of sft power equa to mean in each segment (i.e. no data in this segment)
+            # set snr to 0 if all elements of sft power equal to mean in each segment (i.e. no data in this segment)
             mean_val_gap = np.all(
                 sft.norm_sft_power == np.ones(len(sft.norm_sft_power[0])) * 2, axis=1
             )
@@ -1747,11 +1754,12 @@ class SimulateSpectrogramfromSFT(SimulateGaussianNoiseSpectrogram):
                 data_type=data_type, stride=stride, remove_original=remove_original
             )
 
-    def get_from_cwsimulator(self, sft):
+    def get_from_cwsimulator(self, sft, det):
         """Add signal to data via cwsimulator package
 
         Args:
             sft (_type_): _description_
+            det (str): detector name like 'H1', 'L1'
         """
         wf = self.waveform(self.h0, self.cosi, self.f[0], self.f[1])
         S = simulateCW.CWSimulator(
