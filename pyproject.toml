@@ -45,6 +45,7 @@ dependencies = [
     "lalsuite",
     "numpy",
     "torch",
+    "torchsummary",
     "appdirs",
     "h5py",
     "regex",
