@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools", 
-    "wheel", 
+    "setuptools",
+    "wheel",
     "Cython>=3.0.0"
     ]
 build-backend = "setuptools.build_meta"
@@ -12,7 +12,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["soapcw*", "soapcw_pipeline"] 
+include = ["soapcw*", "soapcw_pipeline"]
 exclude = ["docs*"]
 namespaces = false
 
@@ -45,6 +45,7 @@ dependencies = [
     "lalsuite",
     "numpy",
     "torch",
+    "torchsummary",
     "appdirs",
     "h5py",
     "regex",
@@ -72,7 +73,7 @@ docs = [
     "autodoc",
     "nbsphinx",
     "numpydoc",
-    "rtd-sphinx-theme",
+    "sphinx-rtd-theme",
     "sphinx >= 2.0",
     "sphinx-design",
 ]
@@ -100,10 +101,3 @@ soapcw-cnn-make-data = "soapcw.cnn.cnn_data_gen:main"
 soapcw-cnn-train-model = "soapcw.cnn.train_model:main"
 soapcw-narrowband-sfts = "soapcw.cnn.narrowband_sfts:main"
 soapcw-make-line-aware-statistics = "soapcw.line_aware_stat.save_lookup:main"
-
-
-
-
-
-
-

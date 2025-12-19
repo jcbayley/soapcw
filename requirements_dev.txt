@@ -7,10 +7,10 @@ tox==3.5.2
 coverage==4.5.1
 twine==1.12.1
 pandoc
-sphinx 
-sphinx-bootstrap-theme 
-sphinx_rtd_theme 
-nbsphinx 
+sphinx
+sphinx-bootstrap-theme
+sphinx_rtd_theme
+nbsphinx
 matplotlib
 cython
 scipy
@@ -21,4 +21,3 @@ torch
 appdirs
 pyfstat
 torch-summary
-

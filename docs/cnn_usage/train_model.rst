@@ -2,7 +2,7 @@
 CNN usage
 ============
 
-SOAP is usually run as a pipeline on the LIGO detectors, 
+SOAP is usually run as a pipeline on the LIGO detectors,
 both searching for astrophysical signals and as a detector characterisation tool.
 
 The machine learning part of this method, mostly using CNNs to reduce the impact of instrumental artefacts, and how to use it is described below.
@@ -12,7 +12,7 @@ These tools were designed to run on the LIGO clusters with access to LIGO data, 
 Training a model
 ------------
 
-Once the data has been generated, its time to train a model on this data. 
+Once the data has been generated, its time to train a model on this data.
 There are a number of ways to do this, however, we will use the same configuration file as on the data_generation page.
 
 .. code-block:: console
@@ -37,7 +37,7 @@ There are a number of ways to do this, however, we will use the same configurati
     snrmin= 40                                                  # start SNR for injected signals
     snrmax= 200                                                 # end SNR for injected signals
     n_summed_sfts = 48                                          # Number of SFTs to sum over (48 default as 1 day for 1800s SFTs)
-    save_options=[                                              # which data products to save 
+    save_options=[                                              # which data products to save
         "vit_imgs",                                             # viterbi maps
         "H_imgs",                                               # H1 spectrograms
         "L_imgs",                                               # L1 spectrograms
@@ -51,7 +51,7 @@ There are a number of ways to do this, however, we will use the same configurati
     tend = 1269363618                                           # end time of observation
 
     [lookuptable]
-    type = power                                                # lookuptable type (power, amplitude)                   
+    type = power                                                # lookuptable type (power, amplitude)
     lookup_dir = /path/to/save/lookuptable                      # where to save lookup tables
     snr_width_line = 4                                          # width on SNR prior for line model
     snr_width_signal = 10                                       # width on SNR prior for signal model
@@ -64,7 +64,7 @@ There are a number of ways to do this, however, we will use the same configurati
     img_dim = (180, 362)                                        # size of the default input image (spectrogram)
     conv_layers = [(32, 8, 2, 1),(32, 8, 2, 1),]                # convolutional layers (nfilters, filtersize, n_maxpool, stride)
     avg_pool_size = 5                                           # nxn grid size to average pool to after convolutions
-    fc_layers = [64,32,2]                                       # list of fully connected layers 
+    fc_layers = [64,32,2]                                       # list of fully connected layers
     n_epochs=100                                                # epochs to train for
     n_train_multi_size=30                                       # when using avg_pool_size, train on many different size inputs (this is number of different sizes)
     save_interval=2                                             # how many epochs to save model after
@@ -75,4 +75,4 @@ There are a number of ways to do this, however, we will use the same configurati
 
 
 .. code-block:: console
-    $ soapcw-cnn-train-model -c config.ini 
+    $ soapcw-cnn-train-model -c config.ini
