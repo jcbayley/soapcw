@@ -37,6 +37,7 @@ Usage
 .. toctree::
     :maxdepth: 2
    
+    complete_pipeline_guide
     usage/index
     cnn_usage/index
     neville_usage/index
