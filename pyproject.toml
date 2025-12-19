@@ -72,7 +72,7 @@ docs = [
     "autodoc",
     "nbsphinx",
     "numpydoc",
-    "rtd-sphinx-theme",
+    "sphinx-rtd-theme",
     "sphinx >= 2.0",
     "sphinx-design",
 ]
