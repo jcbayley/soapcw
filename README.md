@@ -1,7 +1,7 @@
 
 
 [![PyPI](https://img.shields.io/pypi/v/soapcw)](https://pypi.org/project/soapcw/)
-[![Documentation Status](https://readthedocs.org/projects/soapcw/badge/?version=latest)](https://soapcw.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://github.com/jcbayley/soapcw/actions/workflows/docs.yml/badge.svg)](https://jcbayley.github.io/soapcw/)
 ![tests](https://github.com/jcbayley/soapcw/actions/workflows/test.yml/badge.svg)
 
 
@@ -22,7 +22,7 @@ This package also includes tools to load in standard short Fourier transforms (S
 
 
 * Free software: MIT license
-* Documentation: https://soapcw.readthedocs.io/en/latest/
+* Documentation: https://jcbayley.github.io/soapcw/
 
 * old LIGO hosted package (!!!!!no longer maintained!!!!): https://git.ligo.org/joseph.bayley/soapcw/
 

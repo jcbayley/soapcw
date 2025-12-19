@@ -34,7 +34,7 @@ repos:
     hooks:
       - id: pytest
         name: pytest
-        entry: bash -c 'pytest tests/ -v || true'
+        entry: bash -c 'python -m pytest tests/ -v || true'
         language: system
         pass_filenames: false
         always_run: true
