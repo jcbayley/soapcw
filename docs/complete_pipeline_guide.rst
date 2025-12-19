@@ -1,5 +1,5 @@
 ============================
-Complete SOAP Pipeline Guide  
+Complete SOAP Pipeline Guide
 ============================
 
 This guide provides a comprehensive walkthrough for running the complete SOAP (Search for Outstanding Astrophysical Phenomena) pipeline for gravitational wave continuous wave searches. The pipeline includes data preparation, statistical analysis, machine learning model training, and result visualization.
@@ -14,7 +14,7 @@ Overview
 The SOAP pipeline consists of several interconnected stages:
 
 1. **Data Preparation**: Narrowbanding SFTs and generating training data
-2. **Statistical Setup**: Creating line-aware lookup tables  
+2. **Statistical Setup**: Creating line-aware lookup tables
 3. **Core Search**: Running the main SOAP algorithm on data
 4. **Machine Learning**: Generating CNN training data and training models
 5. **Visualization**: Creating output plots and sensitivity curves
@@ -37,7 +37,7 @@ Installation
 
    # Install SOAP in development mode
    pip install -e .
-   
+
    # Verify installation
    soapcw-run-soap-astro --help
 
@@ -90,7 +90,7 @@ Create lookup tables for line-aware statistical analysis to distinguish between 
 **Parameters:**
 
 - ``--output-dir``: Directory to save lookup tables
-- ``--snr-width-line``: Prior width of line SNR distribution  
+- ``--snr-width-line``: Prior width of line SNR distribution
 - ``--snr-width-signal``: Prior width of signal SNR distribution
 - ``--prob-line``: Prior probability ratio of line vs noise model
 - ``--lookup-type``: Type of lookup table (``power`` or ``amplitude``)
@@ -141,14 +141,14 @@ Create a configuration file (e.g., ``search_config.ini``):
    snr_width_signal = 10
    prob_line = 0.4
 
-   [transitionmatrix] 
+   [transitionmatrix]
    left_right_prob = 1.000000001
    det1_prob = 1e400
    det2_prob = 1e400
 
    [cnn]
    vitmapmodel_path = none
-   spectmodel_path = none  
+   spectmodel_path = none
    vitmapstatmodel_path = none
    allmodel_path = none
 
@@ -165,7 +165,7 @@ For searching for astrophysical continuous wave signals:
 
    # Generate DAG files for distributed computing
    soapcw-make-dag-files-astro -c search_config.ini
-   
+
    # Submit the DAG file (created in root_dir)
    condor_submit_dag soap_astro_search.dag
 
@@ -177,7 +177,7 @@ For searching for astrophysical continuous wave signals:
      --band-width 0.1 \
      --stride 1
 
-Line Search  
+Line Search
 ~~~~~~~~~~~
 
 For detector characterization and line searches:
@@ -186,7 +186,7 @@ For detector characterization and line searches:
 
    # Generate DAG files
    soapcw-make-dag-files-lines -c search_config.ini
-   
+
    # Submit the DAG file
    condor_submit_dag soap_line_search.dag
 
@@ -224,7 +224,7 @@ Create training datasets for convolutional neural network models.
 **Training Data Types:**
 
 - **Viterbi Maps**: 2D frequency-time tracking maps
-- **Spectrograms**: Power spectral density data  
+- **Spectrograms**: Power spectral density data
 - **Statistics**: Line-aware statistical features
 - **Combined**: Multi-modal training data
 
@@ -255,7 +255,7 @@ Create CNN configuration file (``cnn_config.ini``):
    [model]
    model_type = vitmapmodel  # vitmapmodel, spectmodel, vitmapstatmodel, allmodel
    input_shape = [128, 128, 1]
-   
+
    [data_generation]
    n_train_samples = 50000
    n_val_samples = 10000
@@ -272,13 +272,13 @@ Train Models
      --config cnn_config.ini \
      --model-type vitmapmodel \
      --output-path /path/to/models/vitmapmodel.pt
-   
-   # Train spectrogram model  
+
+   # Train spectrogram model
    soapcw-cnn-train-model \
      --config cnn_config.ini \
      --model-type spectmodel \
      --output-path /path/to/models/spectmodel.pt
-   
+
    # Train combined statistics model
    soapcw-cnn-train-model \
      --config cnn_config.ini \
@@ -288,7 +288,7 @@ Train Models
 **Model Types:**
 
 - ``vitmapmodel``: Processes Viterbi tracking maps
-- ``spectmodel``: Processes power spectrograms  
+- ``spectmodel``: Processes power spectrograms
 - ``vitmapstatmodel``: Combines Viterbi maps with statistics
 - ``allmodel``: Multi-modal model using all data types
 
@@ -412,7 +412,7 @@ Common Issues
 -------------
 
 **SFT Loading Errors**
-  - Verify SFT file paths and permissions  
+  - Verify SFT file paths and permissions
   - Check detector names match SFT file naming convention
   - Ensure sufficient disk space for temporary files
 
@@ -423,7 +423,7 @@ Common Issues
 
 **CNN Training Failures**
   - Verify training data format and completeness
-  - Check GPU availability and CUDA compatibility  
+  - Check GPU availability and CUDA compatibility
   - Adjust batch size for available memory
 
 **HTCondor Job Failures**

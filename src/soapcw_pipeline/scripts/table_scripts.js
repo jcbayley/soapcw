@@ -35,7 +35,7 @@ $(document).ready(() => {
         sortColumnDropdown.empty();
         if (dataset.length > 0) {
             Object.keys(dataset[0]).forEach(key => {
-                if (key !== "plot_path") { 
+                if (key !== "plot_path") {
                     sortColumnDropdown.append(`<option value="${key}">${key}</option>`);
                 }
             });
@@ -90,16 +90,16 @@ $(document).ready(() => {
     function checkURLForSelection() {
         const urlParams = new URLSearchParams(window.location.search);
         const selectedFmin = urlParams.get("selected_fmin");
-    
+
         if (selectedFmin && dataset.length > 0) {
             // Find the index of the matching entry in the full dataset
             const selectedIndex = dataset.findIndex(item => item.fmin == selectedFmin);
-    
+
             if (selectedIndex !== -1) {
                 // Calculate the correct page number
                 currentPage = Math.floor(selectedIndex / 10);
                 loadTable(); // Load the correct page
-    
+
                 // Wait for the table to render before triggering the click
                 setTimeout(() => {
                     const rowIndex = selectedIndex % 10;
@@ -121,7 +121,7 @@ $(document).ready(() => {
         let onlyknownlines = $("#onlyknownlines").is(":checked");
         let hideknownlines = $("#hideknownlines").is(":checked");
 
-    
+
         // Apply filtering to create a new filtered dataset
         filteredDataset = dataset.filter((item) => {
             let freq = parseFloat(item.fmin);
@@ -135,10 +135,10 @@ $(document).ready(() => {
             let passesHwFilter = true;
             if (onlyHwInjs) {
                 passesHwFilter = containsHwInj;
-            } 
+            }
             if (hideHwInjs){
                 passesHwFilter = !containsHwInj
-            }  
+            }
 
             // line filters
             let containsline = info.includes("line");
@@ -161,12 +161,12 @@ $(document).ready(() => {
     $("#applySort").on("click", function () {
         const column = $("#sortColumn").val();
         const order = $("#sortOrder").val(); // Get sorting order
-    
+
         if (column) {
             filteredDataset.sort((a, b) => {
                 let valA = a[column];
                 let valB = b[column];
-    
+
                 // Handle numeric and string sorting
                 if (!isNaN(valA) && !isNaN(valB)) {
                     return order === "asc" ? valA - valB : valB - valA;
@@ -174,7 +174,7 @@ $(document).ready(() => {
                     return order === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 }
             });
-    
+
             currentPage = 0; // Reset to first page after sorting
             loadTable();
         }
@@ -257,10 +257,10 @@ $(document).ready(() => {
             button.value = 0;
             button.innerHTML = "Hide track";
         }
-    
+
         $("#plotlink").attr("href",newpath);
-    
-        $("#displayedImage").attr("src",newpath); 
-    
+
+        $("#displayedImage").attr("src",newpath);
+
     }
 });

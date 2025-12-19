@@ -24,13 +24,13 @@ This package also includes tools to load in standard short Fourier transforms (S
 * Free software: MIT license
 * Documentation: https://soapcw.readthedocs.io/en/latest/
 
-* old LIGO hosted package (!!!!!no longer maintained!!!!): https://git.ligo.org/joseph.bayley/soapcw/ 
+* old LIGO hosted package (!!!!!no longer maintained!!!!): https://git.ligo.org/joseph.bayley/soapcw/
 
 # Publications
 
 * Methods paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006
 * CNN followup paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024
-* Parameter estimation paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022 
+* Parameter estimation paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022
 
 
 # Features
@@ -39,7 +39,7 @@ This package also includes tools to load in standard short Fourier transforms (S
 
 # TODO
 
-* robustly include three detectors 
+* robustly include three detectors
 
 # Credits
 

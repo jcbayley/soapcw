@@ -11,7 +11,7 @@ Publications
 --------
 * Methods paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006
 * CNN followup paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024
-* Parameter estimation paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022 
+* Parameter estimation paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022
 
 Setup
 ===========
@@ -36,7 +36,7 @@ Usage
 
 .. toctree::
     :maxdepth: 2
-   
+
     complete_pipeline_guide
     usage/index
     cnn_usage/index
@@ -49,13 +49,13 @@ Info
 =========
 
 .. toctree::
-    :maxdepth: 1 
+    :maxdepth: 1
 
     modules
     contributing
     authors
     history
-   
+
 
 Indices and tables
 ==================

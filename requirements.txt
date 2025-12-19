@@ -12,4 +12,3 @@ regex
 importlib_resources
 requests
 pandas
-

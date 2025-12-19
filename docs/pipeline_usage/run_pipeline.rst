@@ -4,7 +4,7 @@
 Pipeline usage
 ============
 
-SOAP is usually run as a pipeline on the LIGO detectors, 
+SOAP is usually run as a pipeline on the LIGO detectors,
 both searching for astrophysical signals and as a detector characterisation tool.
 These are referenced as the astrophysical searches and the line searches.
 
@@ -19,8 +19,8 @@ Once installed there are two scripts thats can be used to run the pipeline, firs
 
     $ soapcw-run-soap-astro
 
-is the command which has a number of options. The majority of options are stored in a configuration files which might look something like below. 
-Note that currently this configuration file is slightly different from that of the machine learning config used in the cnn and Neville despite having similar inputs. 
+is the command which has a number of options. The majority of options are stored in a configuration files which might look something like below.
+Note that currently this configuration file is slightly different from that of the machine learning config used in the cnn and Neville despite having similar inputs.
 
 .. code-block:: console
 
@@ -78,12 +78,12 @@ Note that currently this configuration file is slightly different from that of t
 There are a number of available options for this in the command line, which will overwrite the config file, however, the important ones are:
 
 .. code-block:: console
-    '-s', '--start-freq' 
+    '-s', '--start-freq'
     '-e', '--end-freq'
     '-w', '--band-width'
     '--stride'
 
-These set the narrow band widths with band width and define between which frequencies to run the search. 
+These set the narrow band widths with band width and define between which frequencies to run the search.
 The stride refers to how much overlap there will be between the bands (astrophysical searches usually overlap by 1/2 thge bandwidth)
 
 Generally this is a lot of data to run over, so it is run using condor to manage the job submission. The submit and dag files can be created from the config file using this scripts
@@ -94,7 +94,7 @@ Generally this is a lot of data to run over, so it is run using condor to manage
 Then the appropriate dag file can be submitted.
 
 
-Line search 
+Line search
 -----------
 
 The line search is set up in a similar way to the astro search however uses a slightly different config file and job dag file creation.
@@ -122,7 +122,7 @@ The ini file may look something like
     request_disk = 5000
     # the accounting group for the job to run under
     accounting_group = accounting.group
-    # size of the frequency band to split the jobs into 
+    # size of the frequency band to split the jobs into
     band_load_size = 8.0
 
     [input]
@@ -134,7 +134,7 @@ The ini file may look something like
     lines_l1 = /path/to/l1/lines/file.
 
     [data]
-    # start and end frequencies 
+    # start and end frequencies
     # this can be split up into multiple bands wach which have a different bandwidth
     # and stride (summing of frequency bins)
     band_starts = [20,500,1000, 1500]
@@ -147,7 +147,7 @@ The ini file may look something like
     n_summed_sfts = 48
 
     [lookuptable]
-    # which type of lookup table to use 
+    # which type of lookup table to use
     # power finds the best coincident SNR between detectors
     # amplitude finds the best coincident Amplitude between detectors accounting for duty cycle etc (default power)
     lookup_type = power
@@ -163,9 +163,9 @@ The ini file may look something like
     [transitionmatrix]
     # probabilty of jumping up or down in frequency
     left_right_prob = 1.000000001
-    # probability of detector 1 being a bin away from geocenter 
+    # probability of detector 1 being a bin away from geocenter
     det1_prob = 1e400
-    # probability of detector 2 being a bin away from geocenter 
+    # probability of detector 2 being a bin away from geocenter
     det2_prob = 1e400
 
     [cnn]

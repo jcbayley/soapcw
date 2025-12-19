@@ -9,4 +9,3 @@ global-include *.pyx
 
 include src/soapcw_pipeline/css/general.css
 include src/soapcw_pipeline/scripts/table_scripts.js
-

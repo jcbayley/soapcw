@@ -7,17 +7,12 @@ date="20190603"
 RUN apt-get update -y \
 && apt-get install python2.7 python-pip -y
 
-RUN pip install --upgrade pip 
+RUN pip install --upgrade pip
 
-RUN pip2 install --upgrade setuptools 
+RUN pip2 install --upgrade setuptools
 
-RUN pip2 install future cython flake8 coverage 
+RUN pip2 install future cython flake8 coverage
 
 RUN pip install scipy numpy matplotlib nbsphinx
 
 RUN apt-get install pandoc -y
-
-
-
-
-
