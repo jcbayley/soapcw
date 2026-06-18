@@ -240,7 +240,7 @@ class CVAE(nn.Module):
             setattr(self, "mu_{}".format(name[0]), nn.Linear(layer_size, meansize))
         if variance:
             setattr(self, "log_var_{}".format(name[0]), nn.Linear(layer_size, output_dim))
-        if self.dist_type is not "gaussian":
+        if self.dist_type != "gaussian":
             if weight:
                 setattr(self, "weight_{}".format(name[0]), nn.Linear(layer_size, 1))
 

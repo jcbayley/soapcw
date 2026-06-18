@@ -122,7 +122,7 @@ def write_dagfile(config_file, config, verbose=False):
     with open(dag_filename, "w") as f:
         seeds = []
         for i in range(len(band_starts)):
-            seeds.append(random.randint(1, 1e9))
+            seeds.append(random.randint(1, int(1e9)))
 
         for i in range(len(band_starts)):
             comment = "F_{}".format(int(band_starts[i]))
