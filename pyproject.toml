@@ -28,6 +28,7 @@ maintainers=[
     ]
 readme = "README.md"
 license = {text = "MIT License"}
+requires-python = ">=3.10"
 keywords = ["gravitational", "cw", "soap", "ligo",'gravitational waves','pulsars','neutron stars','continuous waves']
 classifiers=[
         'Development Status :: 2 - Pre-Alpha',
@@ -52,7 +53,15 @@ dependencies = [
     "importlib_resources",
     "requests",
     "pandas",
-    "pyfstat"
+    "pyfstat",
+    "astropy",
+    "emcee",
+    "corner",
+    "natsort",
+    "click",
+    "scikit-image",
+    "pycbc",
+    "torchvision"
     ]
 
 
