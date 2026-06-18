@@ -163,6 +163,9 @@ def main():
 
     config_file = os.path.abspath(args.config_file)
 
+    if not os.path.isfile(config_file):
+        raise FileNotFoundError(f"No file {config_file}")
+
     config = SOAPConfig(args.config_file)
     #config = configparser.ConfigParser()
     #config.read(config_file)

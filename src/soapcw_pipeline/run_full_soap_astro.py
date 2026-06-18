@@ -66,7 +66,7 @@ def get_sft_files(sftpaths):
 def get_sft_files_find(output_dir, sftpaths, force_overwrite=False):
     sftlist = []
     if type(sftpaths) == str:
-        sftpaths = sftpaths.split(",")
+        sftpaths = sftpaths.strip("[").strip("]").split(",")
     fnames = []
     for sftpath in sftpaths:
         pathsplit = sftpath.split('/')
@@ -462,7 +462,7 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False, config_file=None
     print("num files: ", len(sftfiles))
     start_load = time.time()
 
-    sft_filelists = get_sft_files_find(outpath, sftfiles, config.getboolean("output","overwrite_files"))
+    sft_filelists = get_sft_files_find(outpath, sftfiles, config.get("output","overwrite_files"))
 
     sftlist = []
     for sftfile in sft_filelists:
@@ -607,23 +607,23 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose = False, config_file=None
         
         # if cnn model provided run the cnn on viterbi map  
         st_cnn = time.time()    
-        if config.getboolean("general","run_vitmap"):
+        if config.get("general","run_vitmap"):
             print("Running CNN on viterbi map")
             vitmap_cnn_prob = run_vitmap_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_vitmap_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap)
             table_save_data["CNN_vitmap_stat"] = float(vitmap_cnn_prob)
-        if config.getboolean("general","run_spect"):
+        if config.get("general","run_spect"):
             print("Running CNN on SFTs")
             spect_cnn_prob = run_spect_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_spectrogram_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], degfree = degfree)
             table_save_data["CNN_spect_stat"] = float(spect_cnn_prob)
-        if config.getboolean("general","run_vitmapstat"):
+        if config.get("general","run_vitmapstat"):
             print("Running CNN on viterbi map and viterbi stat")
             vitmapstat_cnn_prob = run_vitmapstat_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_vitmapstat_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap, soaprun.max_end_prob)
             table_save_data["CNN_vitmapstat_stat"] = float(vitmapstat_cnn_prob)
-        if config.getboolean("general","run_vitmapspect"):
+        if config.get("general","run_vitmapspect"):
             all_cnn_prob = run_vitmapspect_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_vitmapspectrogram_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap, sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], soaprun.max_end_prob, degfree = degfree)
             table_save_data["CNN_vitmapspect"] = float(all_cnn_prob)
             print("Running CNN on viterbi map and SFTs", float(all_cnn_prob))
-        if config.getboolean("general","run_all"):
+        if config.get("general","run_all"):
             print("Running CNN on all")
             all_cnn_prob = run_all_cnn(os.path.join(config["output"]["cnn_model_directory"],f"model_all_for_{train_band_type}_F{bandmin:.1f}_{bandmax:.1f}.pt"), soaprun.vitmap, sft.H1.downsamp_summed_norm_sft_power[:,ind_start:ind_end],sft.L1.downsamp_summed_norm_sft_power[:,ind_start:ind_end], soaprun.max_end_prob, degfree = degfree)
             table_save_data["CNN_all_stat"] = float(all_cnn_prob[0])
