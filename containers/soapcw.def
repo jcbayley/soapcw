@@ -1,0 +1,69 @@
+Bootstrap: docker
+From: ghcr.io/astral-sh/uv:python3.11-bookworm
+
+# ---------------------------------------------------------------------------
+# Apptainer image for running the SOAP CW pipeline on HTCondor.
+#
+# The cluster now force-wraps every job in Apptainer and does NOT bind /home,
+# so the old `getenv=True` + venv-on-/home approach is dead. This image is
+# self-contained: `uv sync --frozen` rebuilds the exact environment from
+# uv.lock inside the image, so it matches your working venv exactly.
+#
+# Console scripts (soapcw-run-soap-astro, ...) end up in /opt/soapcw/.venv/bin,
+# which is put on PATH below.
+#
+# BUILD (run from the repo root, i.e. the dir containing pyproject.toml):
+#     apptainer build --fakeroot containers/soapcw.sif containers/soapcw.def
+#
+# %files paths are resolved relative to the dir you run `apptainer build` from.
+# ---------------------------------------------------------------------------
+
+%files
+    pyproject.toml /opt/soapcw/pyproject.toml
+    uv.lock        /opt/soapcw/uv.lock
+    setup.py       /opt/soapcw/setup.py
+    setup.cfg      /opt/soapcw/setup.cfg
+    README.md      /opt/soapcw/README.md
+    LICENSE        /opt/soapcw/LICENSE
+    MANIFEST.in    /opt/soapcw/MANIFEST.in
+    src            /opt/soapcw/src
+
+%post
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    # build-essential: C/C++ compiler for the Cython soapcw.soap extension
+    apt-get update
+    apt-get install -y --no-install-recommends build-essential git
+    rm -rf /var/lib/apt/lists/*
+
+    cd /opt/soapcw
+    # Rebuild the exact locked environment (no dev deps). Bytecode-compile for
+    # faster cold starts on the worker.
+    export UV_COMPILE_BYTECODE=1
+    uv sync --frozen --no-dev
+
+    # Sanity check inside the image.
+    /opt/soapcw/.venv/bin/soapcw-run-soap-astro --help >/dev/null 2>&1 || true
+    /opt/soapcw/.venv/bin/python -c "import soapcw; from soapcw import cw; print('soapcw import OK')"
+
+%environment
+    export PATH=/opt/soapcw/.venv/bin:$PATH
+    # SOAP forces Agg already, but be explicit so plotting never hunts for an X server.
+    export MPLBACKEND=Agg
+
+%runscript
+    exec "$@"
+
+%labels
+    Name soapcw
+    Description SOAP continuous-wave search pipeline (self-contained for HTCondor/Apptainer)
+
+%help
+    Self-contained image for the SOAP CW pipeline, built from uv.lock.
+
+    Run a console script:
+        apptainer run soapcw.sif soapcw-run-soap-astro --config-file <cfg> ...
+    or open a shell:
+        apptainer shell soapcw.sif
+
+    Entrypoints live in /opt/soapcw/.venv/bin (on PATH).
