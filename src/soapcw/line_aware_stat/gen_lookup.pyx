@@ -1,25 +1,31 @@
 from __future__ import division
-import numpy as np
+
 import pickle
 from sys import stdout
+
+import numpy as np
 import scipy.special as sp
+
 try:
     from scipy.misc import logsumexp
 except:
     from scipy.special import logsumexp
-from libc.math cimport log,exp,sqrt
+
+from libc.math cimport exp, log, sqrt
 from libc.stdio cimport printf
+
 import os
+
 #import integrals
 cwd = os.getcwd()
 
 
 cdef extern from "integrals.h":
     double integral_signal_1det(double g, double logfrac, int k, int N, double pv)
-    double ch2_noise_1det(double g, int k, int N) 
+    double ch2_noise_1det(double g, int k, int N)
     double integral_signal_2det(double g1, double g2, double logfrac, int k, int N, double pv)
     double integral_line_2det(double g1, double g2,  double logfrac, int k, int N, double pv)
-    double ch2_noise_2det(double g1, double g2, int k, int N) 
+    double ch2_noise_2det(double g1, double g2, int k, int N)
 
 
 class LineAwareStatistic:
@@ -33,7 +39,7 @@ class LineAwareStatistic:
             self.signoiseline,self.sig,self.line,self.noise = self.gen_lookup_two_det(powers,powers,signal_prior_width=signal_prior_width,line_prior_width=line_prior_width,noise_line_model_ratio=noise_line_model_ratio,k=k,N=N)
         else:
             raise Exception("This currently only works for 1 or 2 detectors")
-    
+
     def bayes_2det(self,g1,g2,logfrac,k,N,signal_prior_width,line_prior_width,noise_line_model_ratio):
         """
         calculate the bayes factor for signal noise and line
@@ -75,7 +81,7 @@ class LineAwareStatistic:
         noise = ch2_noise_2det(g1,g2,k,N)
         b1 = sig_int/(noise_line_model_ratio*line_int + noise)
         return [b1,sig_int,line_int,noise]
-    
+
     def bayes_1det(self,g,logfrac,k,N,signal_prior_width,line_prior_width,noise_line_model_ratio):
         """
         calculate the bayes factor for signal noise and line
@@ -117,7 +123,7 @@ class LineAwareStatistic:
         noise = ch2_noise_1det(g,k,N)
         b1 = sig_int/(noise_line_model_ratio*line_int + noise)
         return [b1,sig_int,line_int,noise]
-    
+
     def gen_lookup_one_det(self,x,signal_prior_width=1,line_prior_width=1,noise_line_model_ratio=1,k=2,N=48):
         """
         calculates the odds ratio for given values of power and ratio.
@@ -136,7 +142,7 @@ class LineAwareStatistic:
         k: int
         number of degrees of freedom
         N: int
-        number of summed distributions, i.e. SFTs 
+        number of summed distributions, i.e. SFTs
         returns
         ----------
         odds: array
@@ -161,7 +167,7 @@ class LineAwareStatistic:
             signal[i] = ig[1]
             line[i] = ig[2]
             noise[i] = ig[3]
-            
+
         return np.array(odds),np.array(signal),np.array(line),np.array(noise)
 
 
@@ -187,7 +193,7 @@ class LineAwareStatistic:
         k: int
         number of degrees of freedom
         N: int
-        number of summed distributions, i.e. SFTs 
+        number of summed distributions, i.e. SFTs
         returns
         ----------
         odds: array
@@ -198,9 +204,9 @@ class LineAwareStatistic:
         array of line likelihoods
         noise: array
         array of noise likelihoods
-        
+
         """
-        
+
         cdef int i
         cdef int j
         cdef double[:] xc = x
@@ -217,7 +223,7 @@ class LineAwareStatistic:
                 signal[i,j] = ig[1]
                 line[i,j] = ig[2]
                 noise[i,j] = ig[3]
-                
+
         return np.array(odds),np.array(signal),np.array(line),np.array(noise)
 
 
@@ -231,14 +237,14 @@ class LineAwareAmpStatistic(LineAwareStatistic):
         self.noise_line_model_ratio = noise_line_model_ratio
         self.k = k
         self.N = N
-        
+
         if ndet == 1:
             self.signoiseline,self.sig,self.line,self.noise = self.gen_lookup_one_det_amp(powers,signal_prior_width=signal_prior_width,line_prior_width=line_prior_width,noise_line_model_ratio=noise_line_model_ratio)
         elif ndet == 2:
             self.signoiseline,self.sig,self.line,self.noise = self.gen_lookup_two_det_amp(powers,powers,fractions,signal_prior_width=signal_prior_width,line_prior_width=line_prior_width,noise_line_model_ratio=noise_line_model_ratio)
         else:
             raise Exception("Currently only works for 1 or two detectors")
-            
+
     def gen_lookup_two_det_amp(self,x,y,n1,signal_prior_width=1,line_prior_width=1,noise_line_model_ratio=1,k=2,N=48):
         """
         calculates the odds ratio in ch_integrals_approx_noise for given values of power and ratio.
@@ -303,7 +309,3 @@ class LineAwareAmpStatistic(LineAwareStatistic):
                     #val5[i,j,k] = ig[5]
 
         return np.array(odds),np.array(signal),np.array(line),np.array(noise)#,val4,val5
-                
-
-    
-    

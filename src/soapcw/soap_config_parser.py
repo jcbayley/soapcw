@@ -1,12 +1,13 @@
-import configparser
-import json
-import regex
-import os
-import importlib_resources
-import importlib.resources as pkg_resources
-import logging
-from typing import Any
 import ast
+import configparser
+import importlib.resources as pkg_resources
+import json
+import logging
+import os
+from typing import Any
+
+import importlib_resources
+import regex
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,8 @@ class SOAPConfigParser(configparser.ConfigParser):
         with open(filename, "w") as f:
             self.write(f)
 
-class SOAPConfig(SOAPConfigParser):
 
+class SOAPConfig(SOAPConfigParser):
     def __init__(self, config_file, **kwargs):
         super().__init__(self, **kwargs)
         logger.info(f"Loading config from: {config_file}")
@@ -40,13 +41,13 @@ class SOAPConfig(SOAPConfigParser):
         self.config_file = os.path.abspath(config_file)
 
 
-
 def try_literal_eval(value: Any, /) -> Any:
     """Try to call literal eval return value if an error is raised"""
     try:
         return ast.literal_eval(value)
     except (ValueError, SyntaxError):
         return value
+
 
 def read_config(config_file: str, **kwargs) -> SOAPConfigParser:
     """Read a config file"""
@@ -56,30 +57,74 @@ def read_config(config_file: str, **kwargs) -> SOAPConfigParser:
     return config
 
 
-class SOAPConfigOld():
-
+class SOAPConfigOld:
     def __init__(self, config_file):
         cfg = configparser.ConfigParser()
         my_resources = importlib_resources.files("soapcw")
-        cfg.read((my_resources / "cnn"/ "init_files" / "default_gauss.ini"))
+        cfg.read((my_resources / "cnn" / "init_files" / "default_gauss.ini"))
 
         cfg.read(config_file)
 
         self.config_file = os.path.abspath(config_file)
-        self.float_list = ["band_starts","band_ends","band_widths"]
-        self.int_list = ["strides","fc_layers","img_dim", "avg_pool_size"]
-        self.string_list = ["load_directory","save_options","type","band_types","sft_dirs","detectors"]
+        self.float_list = ["band_starts", "band_ends", "band_widths"]
+        self.int_list = ["strides", "fc_layers", "img_dim", "avg_pool_size"]
+        self.string_list = [
+            "load_directory",
+            "save_options",
+            "type",
+            "band_types",
+            "sft_dirs",
+            "detectors",
+        ]
         self.tuple_list = ["conv_layers"]
-        self.floats = ["band_load_size", "snr_width_line", "snr_width_signal", 
-                        "prob_line", "left_right_prob", "det1_prob", "det2_prob",
-                        "snrmin","snrmax","learning_rate","data_load_size","tstart","dropout"]
-        self.ints = ["memory", "request_disk", "n_jobs", "n_channels","nperband",
-                     "n_summed_sfts","n_epochs","save_interval","nsfts", "tstart", "tend",
-                     "n_train_multi_size","fdim","input_dim","par_dim","num_predict_params","latent_dim","stride"]
+        self.floats = [
+            "band_load_size",
+            "snr_width_line",
+            "snr_width_signal",
+            "prob_line",
+            "left_right_prob",
+            "det1_prob",
+            "det2_prob",
+            "snrmin",
+            "snrmax",
+            "learning_rate",
+            "data_load_size",
+            "tstart",
+            "dropout",
+        ]
+        self.ints = [
+            "memory",
+            "request_disk",
+            "n_jobs",
+            "n_channels",
+            "nperband",
+            "n_summed_sfts",
+            "n_epochs",
+            "save_interval",
+            "nsfts",
+            "tstart",
+            "tend",
+            "n_train_multi_size",
+            "fdim",
+            "input_dim",
+            "par_dim",
+            "num_predict_params",
+            "latent_dim",
+            "stride",
+        ]
         self.bools = ["resize_image", "overwrite_files", "gen_noise_only"]
-        self.strings = ["save_dir", "narrowband_sft_dir", "accounting_group", "root_dir", 
-                        "run", "type", "lookup_dir", "model_type","search_exec","dist_type"]
-
+        self.strings = [
+            "save_dir",
+            "narrowband_sft_dir",
+            "accounting_group",
+            "root_dir",
+            "run",
+            "type",
+            "lookup_dir",
+            "model_type",
+            "search_exec",
+            "dist_type",
+        ]
 
         self.config = self.parse_config(cfg)
 
@@ -91,13 +136,13 @@ class SOAPConfigOld():
             val = val.strip("[").strip("]").strip("(").strip(")").split(",")
         else:
             val = [val.strip("[").strip("]").strip("(").strip(")").strip(",")]
-        
+
         if partype == "float":
             val = [float(v) for v in val]
         elif partype == "int":
             val = [int(v) for v in val]
         elif partype == "string":
-            val = [v.replace('"','').replace(' ','').strip() for v in val]
+            val = [v.replace('"', "").replace(" ", "").strip() for v in val]
         else:
             raise Exception(f"Type {partype} not supported")
 
@@ -110,9 +155,8 @@ class SOAPConfigOld():
             return True
         else:
             raise Exception("Value not of Bool type")
-            
-    def parse_config(self, cfg):
 
+    def parse_config(self, cfg):
         parsed_dict = {}
         for key, val in cfg.items():
             parsed_dict[key] = {}
@@ -137,18 +181,20 @@ class SOAPConfigOld():
                     for mod in regex.split(r"\s*,\s*(?![^(]*\))", val2.strip("[").strip("]")):
                         if mod == "":
                             continue
-                        out_tuple = tuple([int(vl) for vl in mod.strip("\n").strip("(").strip(")").split(",")])
-    
+                        out_tuple = tuple(
+                            [int(vl) for vl in mod.strip("\n").strip("(").strip(")").split(",")]
+                        )
+
                         temp_out.append(out_tuple)
 
                     parsed_dict[key][key2] = temp_out
                 elif key2 in self.strings:
-                    parsed_dict[key][key2] = val2.replace('"','')
+                    parsed_dict[key][key2] = val2.replace('"', "")
                 else:
                     print(f"Key not in defaults: {key}, {key2}")
                     if val2 in ["none", "None"]:
                         parsed_dict[key][key2] = None
                     else:
-                        parsed_dict[key][key2] = val2.replace('"','')
-                
+                        parsed_dict[key][key2] = val2.replace('"', "")
+
         return parsed_dict

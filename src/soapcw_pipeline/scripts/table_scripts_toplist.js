@@ -45,7 +45,7 @@ $(document).ready(function () {
         table.column(index).visible(true);
         table.column(index).visible(false);
 
-        
+
     });
 
     /* Show images and the infor table when a row is clicked in the table*/
@@ -60,7 +60,7 @@ $(document).ready(function () {
         */
         let table = $('#inTable').DataTable({retrieve:true});
         let index = get_plot_column(table, "plot_path");
-        var rowdata=$('#inTable').dataTable({retrieve:true}).fnGetData($(this)); 
+        var rowdata=$('#inTable').dataTable({retrieve:true}).fnGetData($(this));
         var newpath = rowdata[index];
         /*var newpath = table.rows(table.rows()[0][this.rowIndex]-1).data()[0][index];*/
         const image = document.getElementById("image");
@@ -82,10 +82,10 @@ function nextTablePage(event){
         let npage = document.getElementById("lastpagebutton");
         npage.value = parseInt(npage.value) + parseInt(itemsPerPage);
         lpage.value = parseInt(lpage.value) + parseInt(itemsPerPage);
-        
+
         const image = document.getElementById("image");
         image.setAttribute("value", 0);
-        
+
         data = checkFilters(data);
         /*event.target.value = parseInt(event.target.value) + parseInt(itemsPerPage);*/
         if (parseInt(npage.value) > parseInt(data.length)){
@@ -107,10 +107,10 @@ function lastTablePage(event){
         let npage = document.getElementById("lastpagebutton");
         npage.value = parseInt(npage.value) - parseInt(itemsPerPage);
         lpage.value = parseInt(lpage.value) - parseInt(itemsPerPage);
-        
+
         const image = document.getElementById("image");
         image.setAttribute("value", 9);
-        
+
         data = checkFilters(data);
         if (lpage.value < 0){
             window.alert("End of table");
@@ -143,14 +143,14 @@ function sortJSONTable(jdata){
         jdata.sort(function(a,b) { return parseFloat(a[text]) - parseFloat(b[text]) } );
     }
     else{
-        jdata.sort(function(a,b) { 
+        jdata.sort(function(a,b) {
             return parseFloat(b[text]) - parseFloat(a[text]) } );
     }
     return jdata
 }
 
 function filterJSONFrequencies(data){
-    
+
     let minfreq = document.getElementById("minfreq");
     let maxfreq = document.getElementById("maxfreq");
     let result = Object.entries(data).filter(([key, value]) => parseFloat(value.fmin) > parseFloat(minfreq.value)).filter(([key, value]) => parseFloat(value.fmax) < parseFloat(maxfreq.value)).map(([key, value]) => value);
@@ -187,7 +187,7 @@ function filterHWinjs(data){
     else{
         return data
     }
-    
+
 }
 
 
@@ -209,7 +209,7 @@ function filterKnownLines(data){
     else{
         return data
     }
-    
+
 }
 
 function checkFilters(data){
@@ -218,7 +218,7 @@ function checkFilters(data){
     data = filterHWinjs(data);
     data = filterKnownLines(data);
     data = sortJSONTable(data);
-    
+
     return data
 }
 
@@ -227,7 +227,7 @@ function loadTableElements(startIndex, data){
 
     const table = document.getElementById("inTable");
     table.innerHTML = "";
-    /*var rowCount = table.rows.length; 
+    /*var rowCount = table.rows.length;
     while(--rowCount) table.deleteRow(rowCount);*/
 
     let keys = Object.keys(data[0]);
@@ -253,7 +253,7 @@ function loadTableElements(startIndex, data){
     let ttable = $('#inTable').DataTable({"ordering": false,searching: false, paging: false, info: false, "bAutoWidth": false,"bDestroy" : true, sortable:false});
     return ttable;
 
-    
+
 
 }
 
@@ -360,7 +360,7 @@ function nextImage(event){
             }
         })
     }
-    
+
     $("#image").css({'opacity': 1.0});
 
 }
@@ -391,13 +391,13 @@ function previousImage(event){
             }
         })
     }
-    
-    
-    
+
+
+
     $("#image").css({'opacity': 1.0});
 }
 
-function changeImg(newpath) { 
+function changeImg(newpath) {
     /* change the image based on the input new path */
     /* If the button for hiding and showing track is clicked the show the appropriate image*/
 
@@ -411,9 +411,9 @@ function changeImg(newpath) {
 
     $("#plotlink").attr("href",newpath);
 
-    $("#image").attr("src",newpath); 
+    $("#image").attr("src",newpath);
 
-} 
+}
 
 function changeColumn(event){
     let table = $('#inTable').DataTable({searching: false, paging: false, info: false, "bAutoWidth": false,"bDestroy" : true, sortable:false});
@@ -446,7 +446,7 @@ function showHideTrack(event){
 
     $("#plotlink").attr("href",newpath);
 
-    $("#image").attr("src",newpath); 
+    $("#image").attr("src",newpath);
 
 }
 
@@ -462,7 +462,7 @@ function defaultVisible(items){
             table.column(i).visible(false);
         }
     }
-}   
+}
 
 function setVisible(data){
     let keys = Object.keys(data[0]);
@@ -492,7 +492,7 @@ function makeCheckBoxes(items){
         if (keys[i] == "lineaware_stat"){
             elemsort.selected = "selected";
         }
-        
+
         if (keys[i] == "fmin" | keys[i] == "fmax" | keys[i] == "info" | keys[i] == "lineaware_stat" |keys[i] == "H1_viterbistat"| keys[i] == "H1_viterbistat" | keys[i] == "Viterbi"){
             elemcheck.innerHTML = '<input type="checkbox" id="' + keys[i] + '" name="' + keys[i] + '" value="' + (i) + '" checked onclick=changeColumn(event)>' + keys[i];
             /*$('td:nth-child(' + (i+1) + ')').show();*/
@@ -502,7 +502,7 @@ function makeCheckBoxes(items){
             elemcheck.innerHTML = '<input type="checkbox" id="' + keys[i] + '"" name="' + keys[i] + '" value="' + (i) + '" onclick=changeColumn(event)>' + keys[i];
             /*$('td:nth-child(' + (i+1) + ')').hide();*/
             /*table.column(i).visible(false);*/
-            
+
         }
         checkform.appendChild(elemcheck);
         sortdrop.appendChild(elemsort);
@@ -534,9 +534,9 @@ function loadTableData(items) {
         col.innerHTML = items[i][keys[j]];
         }
     }
-        
-    
-    $('#inTable').dataTable({  
+
+
+    $('#inTable').dataTable({
             "bAutoWidth": false,
         });
 

@@ -1,7 +1,7 @@
 
 
 [![PyPI](https://img.shields.io/pypi/v/soapcw)](https://pypi.org/project/soapcw/)
-[![Documentation Status](https://readthedocs.org/projects/soapcw/badge/?version=latest)](https://soapcw.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://github.com/jcbayley/soapcw/actions/workflows/docs.yml/badge.svg)](https://jcbayley.github.io/soapcw/)
 ![tests](https://github.com/jcbayley/soapcw/actions/workflows/test.yml/badge.svg)
 
 
@@ -22,15 +22,15 @@ This package also includes tools to load in standard short Fourier transforms (S
 
 
 * Free software: MIT license
-* Documentation: https://soapcw.readthedocs.io/en/latest/
+* Documentation: https://jcbayley.github.io/soapcw/
 
-* old LIGO hosted package (!!!!!no longer maintained!!!!): https://git.ligo.org/joseph.bayley/soapcw/ 
+* old LIGO hosted package (!!!!!no longer maintained!!!!): https://git.ligo.org/joseph.bayley/soapcw/
 
 # Publications
 
 * Methods paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.023006
 * CNN followup paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.102.083024
-* Parameter estimation paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022 
+* Parameter estimation paper: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.083022
 
 
 # Features
@@ -39,7 +39,7 @@ This package also includes tools to load in standard short Fourier transforms (S
 
 # TODO
 
-* robustly include three detectors 
+* robustly include three detectors
 
 # Credits
 

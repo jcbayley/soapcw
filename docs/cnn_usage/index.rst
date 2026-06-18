@@ -10,4 +10,3 @@ This contains exampes of how to generate data for the CNN to train and examples 
 
     data_generation.rst
     train_model.rst
-

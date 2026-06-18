@@ -22,14 +22,14 @@ double signal_1det(double l, void *params){
   struct param_type_1det *my_params = (struct param_type_1det *) params;
   double g = my_params->g;  // x value for pdf
   int k = my_params->k;     // number of degrees of freedom for chi2 distribution for individual sft
-  int N = my_params->N;     // Number of summed sfts 
+  int N = my_params->N;     // Number of summed sfts
   double pv = my_params->pv;// width of the exponential prior on SNR
   double wid = 1.0/pv;      // 1/width on the exponential prior
   //double val = 0;
   boost::math::non_central_chi_squared_distribution<> ch(k*N, l);
   double val;
   val = pdf(ch,g);
-  
+
   return val*wid*exp(-wid*l);
 }
 
@@ -110,7 +110,7 @@ double signal_2det(double l, void *params){
   else{
     val = pdf(ch1,g2)*pdf(ch2,g1);
   }
-  
+
   return val*wid*exp(-wid*l);
 }
 
@@ -136,7 +136,7 @@ double line_2det(double l, void *params){
   boost::math::non_central_chi_squared_distribution<> ch2(k*N, l*fraction);
   boost::math::non_central_chi_squared_distribution<> ch3(k*N, l);
   val = pdf(ch1,g1)*pdf(ch3,g2) + pdf(ch2,g1)*pdf(ch1,g2);
-  
+
   return 0.5*val*wid*exp(-wid*l);
 }
 
@@ -155,7 +155,7 @@ double integral_signal_2det(double g1,double g2,double fraction,int k,int N, dou
   double rel_error = 1.0e-8;	/* the result will usually be much better */
   double result;		/* the result from the integration */
   double error;                 /* the estimated error from the integration */
-  
+
   param_type_2det param_val = {g1,g2,fraction,k,N,pv};
 
   gsl_function Function;
@@ -181,7 +181,7 @@ double integral_line_2det(double g1,double g2,double fraction,int k,int N, doubl
   double rel_error = 1.0e-8;	/* the result will usually be much better */
   double result;		/* the result from the integration */
   double error;                 /* the estimated error from the integration */
-  
+
   param_type_2det param_val = {g1,g2,fraction,k,N,pv};
 
   gsl_function Function;
@@ -198,5 +198,3 @@ double integral_line_2det(double g1,double g2,double fraction,int k,int N, doubl
 
   return result;
 }
-
-

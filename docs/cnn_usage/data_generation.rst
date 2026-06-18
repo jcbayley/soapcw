@@ -4,7 +4,7 @@
 Creating data
 ============
 
-SOAP is usually run as a pipeline on the LIGO detectors, 
+SOAP is usually run as a pipeline on the LIGO detectors,
 both searching for astrophysical signals and as a detector characterisation tool.
 
 The machine learning part of this method, mostly using CNNs to reduce the impact of instrumental artefacts, and how to use it is described below.
@@ -14,8 +14,8 @@ These tools were designed to run on the LIGO clusters with access to LIGO data, 
 Data Generation
 ------------
 
-Once installed there are few scripts needed to run the machine learning part of the search. 
-These include the data generation, the result of which will be used to train a CNN. 
+Once installed there are few scripts needed to run the machine learning part of the search.
+These include the data generation, the result of which will be used to train a CNN.
 These are all managed from a config file which you will see below:
 
 .. code-block:: console
@@ -41,7 +41,7 @@ These are all managed from a config file which you will see below:
     snrmin= 40                                                  # start SNR for injected signals
     snrmax= 200                                                 # end SNR for injected signals
     n_summed_sfts = 48                                          # Number of SFTs to sum over (48 default as 1 day for 1800s SFTs)
-    save_options=[                                              # which data products to save 
+    save_options=[                                              # which data products to save
         "vit_imgs",                                             # viterbi maps
         "H_imgs",                                               # H1 spectrograms
         "L_imgs",                                               # L1 spectrograms
@@ -55,7 +55,7 @@ These are all managed from a config file which you will see below:
     tend = 1269363618                                           # end time of observation
 
     [lookuptable]
-    type = power                                                # lookuptable type (power, amplitude)                   
+    type = power                                                # lookuptable type (power, amplitude)
     lookup_dir = /path/to/save/lookuptable                      # where to save lookup tables
     snr_width_line = 4                                          # width on SNR prior for line model
     snr_width_signal = 10                                       # width on SNR prior for signal model
@@ -68,7 +68,7 @@ These are all managed from a config file which you will see below:
     img_dim = (180, 362)                                        # size of the default input image (spectrogram)
     conv_layers = [(32, 8, 2, 1),(32, 8, 2, 1),]                # convolutional layers (nfilters, filtersize, n_maxpool, stride)
     avg_pool_size = 5                                           # nxn grid size to average pool to after convolutions
-    fc_layers = [64,32,2]                                       # list of fully connected layers 
+    fc_layers = [64,32,2]                                       # list of fully connected layers
     n_epochs=100                                                # epochs to train for
     n_train_multi_size=30                                       # when using avg_pool_size, train on many different size inputs (this is number of different sizes)
     save_interval=2                                             # how many epochs to save model after
@@ -79,7 +79,7 @@ These are all managed from a config file which you will see below:
 
 .. code-block:: console
 
-    $ soapcw-cnn-make-data-dag 
+    $ soapcw-cnn-make-data-dag
 
 This will create a set of sub and dag files to be used with condor, and it will call the program:
 

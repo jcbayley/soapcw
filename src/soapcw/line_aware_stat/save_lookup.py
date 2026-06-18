@@ -1,25 +1,22 @@
 try:
-    from .import gen_lookup
+    from . import gen_lookup
 except:
-    from .import gen_lookup_python as gen_lookup
-    #print("using python integration for line aware stat (install boost and gsl C++ libraries for faster runtime -- see documentation)")
-import numpy as np
-import sys
-import json
-import pickle as pickle
+    from . import gen_lookup_python as gen_lookup
+
+    # print("using python integration for line aware stat (install boost and gsl C++ libraries for faster runtime -- see documentation)")
+
 import argparse
+import json
 import os
+import pickle as pickle
+import sys
+
+import numpy as np
+
 
 def save_lookup_amp(
-    p1,
-    p2,
-    ratio,
-    outdir, 
-    ndet=2, 
-    k=2,
-    N=48,
-    pow_range = (1,400,500), 
-    frac_range = (0.1,1,10)):
+    p1, p2, ratio, outdir, ndet=2, k=2, N=48, pow_range=(1, 400, 500), frac_range=(0.1, 1, 10)
+):
     """
     save the lookup table for two detectors with the line aware statistic with consitistent amplitude
     (uses json to save file)
@@ -38,25 +35,26 @@ def save_lookup_amp(
     frac_range: tuple
         ranges for the ratios of sensitivity and duty cycle (lower, upper, number), default (0.1,1,10)
     """
-    minimum,maximum,num = pow_range
-    minn,maxn,numn = frac_range
+    minimum, maximum, num = pow_range
+    minn, maxn, numn = frac_range
     ch_arr_app = gen_lookup.LineAwareAmpStatistic(
-            np.linspace(minimum,maximum,num),
-            fractions=np.linspace(minn,maxn,numn), 
-            ndet=ndet,
-            k=k,
-            N=N,
-            signal_prior_width=p1,
-            line_prior_width=p2,
-            noise_line_model_ratio=ratio)
+        np.linspace(minimum, maximum, num),
+        fractions=np.linspace(minn, maxn, numn),
+        ndet=ndet,
+        k=k,
+        N=N,
+        signal_prior_width=p1,
+        line_prior_width=p2,
+        noise_line_model_ratio=ratio,
+    )
 
-    ch_arr_app.save_lookup(outdir,log=True, stat_type = "signoiseline")
+    ch_arr_app.save_lookup(outdir, log=True, stat_type="signoiseline")
 
 
-def save_lookup(p1,p2,ratio,outdir,ndet=2,pow_range = (1,400,500), k=2, N=48):
+def save_lookup(p1, p2, ratio, outdir, ndet=2, pow_range=(1, 400, 500), k=2, N=48):
     """
     save the lookup table for two detectors with the line aware statistic
-    
+
     Args
     --------------
     p1 : float
@@ -72,45 +70,46 @@ def save_lookup(p1,p2,ratio,outdir,ndet=2,pow_range = (1,400,500), k=2, N=48):
 
     """
 
-    minimum,maximum,num = pow_range
+    minimum, maximum, num = pow_range
 
-    powers = np.linspace(minimum,maximum,num)
-    ch_arr_app = gen_lookup.LineAwareStatistic(powers=powers,
-                                                ndet=ndet,
-                                                k = k,
-                                                N = N,
-                                                signal_prior_width=p1,
-                                                line_prior_width=p2,
-                                                noise_line_model_ratio=ratio)
+    powers = np.linspace(minimum, maximum, num)
+    ch_arr_app = gen_lookup.LineAwareStatistic(
+        powers=powers,
+        ndet=ndet,
+        k=k,
+        N=N,
+        signal_prior_width=p1,
+        line_prior_width=p2,
+        noise_line_model_ratio=ratio,
+    )
 
-    ch_arr_app.save_lookup(outdir,log=True, stat_type = "signoiseline")
+    ch_arr_app.save_lookup(outdir, log=True, stat_type="signoiseline")
 
-        #with open(outdir+"/signoiseline_{}det_{}_{}_{}.txt".format(ndet, p1,p2,ratio),'wb') as f:
-        #    header = "{} {} {}".format(minimum,maximum,num)
-        #    np.savetxt(f,np.log(ch_arr_app.signoiseline),header = header)
+    # with open(outdir+"/signoiseline_{}det_{}_{}_{}.txt".format(ndet, p1,p2,ratio),'wb') as f:
+    #    header = "{} {} {}".format(minimum,maximum,num)
+    #    np.savetxt(f,np.log(ch_arr_app.signoiseline),header = header)
 
 
-
-def resave_files(p1,p2,ratio,output):
+def resave_files(p1, p2, ratio, output):
     """
     resave text files into pickle format
     """
-    if os.path.isfile(output+"/txt/ch2_signoiseline_{}_{}_{}.txt".format(p1,p2,ratio)):
-        with open(output+"/txt/ch2_signoiseline_{}_{}_{}.txt".format(p1,p2,ratio),'rb') as f:
+    if os.path.isfile(output + "/txt/ch2_signoiseline_{}_{}_{}.txt".format(p1, p2, ratio)):
+        with open(output + "/txt/ch2_signoiseline_{}_{}_{}.txt".format(p1, p2, ratio), "rb") as f:
             save_array = pickle.load(f)
-        if os.path.isdir(output+"/pkl/"):
+        if os.path.isdir(output + "/pkl/"):
             pass
         else:
-            os.mkdir(output+"/pkl/")
-        with open(output+"/pkl/ch2_signoiseline_{}_{}_{}.pkl".format(p1,p2,ratio),'wb') as f:
-            pickle.dump(save_array,f,protocol=pickle.HIGHEST_PROTOCOL)
+            os.mkdir(output + "/pkl/")
+        with open(output + "/pkl/ch2_signoiseline_{}_{}_{}.pkl".format(p1, p2, ratio), "wb") as f:
+            pickle.dump(save_array, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def main():
-
     parser = argparse.ArgumentParser(
-                    prog = 'SOAP lookup table generation',
-                    description = 'generates lookup tables for SOAP',)
+        prog="SOAP lookup table generation",
+        description="generates lookup tables for SOAP",
+    )
 
     parser.add_argument('--amp-stat',action='store_true') 
     parser.add_argument('-c', '--config-file', required=False, type=str)
@@ -126,11 +125,16 @@ def main():
     parser.add_argument('-pmax', '--pow-max', default=400, required=False, type=float) 
     parser.add_argument('-np', '--n-powers', default=500, required=False, type=int) 
 
-    parser.add_argument('-fmin', '--frac-min', default=0.1, required=False, type=float) 
-    parser.add_argument('-fmax', '--frac-max', default=1, required=False, type=float) 
-    parser.add_argument('-nf', '--n-fracs', default=10, required=False, type=int) 
 
-    parser.add_argument('-A', '--make-all', action="store_true") 
+    parser.add_argument("-pmin", "--pow-min", default=1, required=False, type=float)
+    parser.add_argument("-pmax", "--pow-max", default=400, required=False, type=float)
+    parser.add_argument("-np", "--n-powers", default=500, required=False, type=int)
+
+    parser.add_argument("-fmin", "--frac-min", default=0.1, required=False, type=float)
+    parser.add_argument("-fmax", "--frac-max", default=1, required=False, type=float)
+    parser.add_argument("-nf", "--n-fracs", default=10, required=False, type=int)
+
+    parser.add_argument("-A", "--make-all", action="store_true")
 
     args = parser.parse_args()
 
@@ -219,7 +223,6 @@ def main():
                     ndet=cfg["lookuptable"]["ndet"],
                     pow_range = (cfg["lookuptable"]["pow_min"],cfg["lookuptable"]["pow_min"],cfg["lookuptable"]["n_powers"]),
                     frac_range = (cfg["lookuptable"]["frac_min"],cfg["lookuptable"]["frac_max"],cfg["lookuptable"]["n_fracs"]))
-
 
 
 if __name__ == "__main__":
