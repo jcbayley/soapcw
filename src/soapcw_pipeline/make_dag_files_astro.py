@@ -18,17 +18,23 @@ def write_plot_subfile(sub_filename, config, config_file, cdirs, comment, verbos
     with open(sub_filename, "w") as f:
         f.write("# filename: {}\n".format(sub_filename))
         f.write("universe = vanilla\n")
-        # Run inside the self-contained soapcw Apptainer image.
-        f.write(f'+SingularityImage = "{config["condor"]["container_image"]}"\n')
-        f.write("transfer_executable = false\n")
-        script_exec = os.path.join("/opt/soapcw/.venv/bin", config["scripts"]["search_exec"])
-        f.write("executable = {}\n".format(script_exec))
+        image = config["condor"]["container_image"]
+        if image not in (None, "", "none", "None"):
+            # Run inside the self-contained soapcw Apptainer image.
+            f.write(f'+SingularityImage = "{image}"\n')
+            f.write("transfer_executable = false\n")
+            f.write("executable = {}\n".format(os.path.join("/opt/soapcw/.venv/bin", config["scripts"]["search_exec"])))
+            script_exec = ""
+        else:
+            # Run the submit-node uv venv python directly.
+            f.write("executable = {}\n".format(sys.executable))
+            script_exec = os.path.join(os.path.dirname(sys.executable), config["scripts"]["search_exec"]) + " "
         f.write("RequestMemory = {} \n".format(config["condor"]["memory"]))
         f.write(f'request_disk={config["condor"]["request_disk"]}\n')
         f.write("log = {}/{}_$(cluster).log\n".format(cdirs["log_dir"], comment))
         f.write("error = {}/{}_$(cluster).err\n".format(cdirs["err_dir"], comment))
         f.write("output = {}/{}_$(cluster).out\n".format(cdirs["output_dir"], comment))
-        args = f'arguments = --config-file {config_file} -s $(bandstart) -e $(bandend) -r {config["data"]["obs_run"]} -l {config["lookuptable"]["lookup_dir"]} -w {config["condor"]["band_load_size"]} -sd {config["output"]["sub_directory"]}'
+        args = f'arguments = {script_exec}--config-file {config_file} -s $(bandstart) -e $(bandend) -r {config["data"]["obs_run"]} -l {config["lookuptable"]["lookup_dir"]} -w {config["condor"]["band_load_size"]} -sd {config["output"]["sub_directory"]}'
 
         f.write(args + "\n")
         # f.write('accounting_group = aluk.dev.s6.cw.viterbi\n')
@@ -39,21 +45,26 @@ def write_plot_subfile(sub_filename, config, config_file, cdirs, comment, verbos
 
 
 def write_html_subfile(sub_filename, config, config_file, cdirs, comment, verbose=True):
-    script_exec = os.path.join("/opt/soapcw/.venv/bin", config["scripts"]["html_exec"])
     with open(sub_filename, "w") as f:
         f.write("# filename: {}\n".format(sub_filename))
         f.write("universe = vanilla\n")
-        # Run inside the self-contained soapcw Apptainer image.
-        f.write(f'+SingularityImage = "{config["condor"]["container_image"]}"\n')
-        f.write("transfer_executable = false\n")
-        f.write("executable = {}\n".format(script_exec))
+        image = config["condor"]["container_image"]
+        if image not in (None, "", "none", "None"):
+            # Run inside the self-contained soapcw Apptainer image.
+            f.write(f'+SingularityImage = "{image}"\n')
+            f.write("transfer_executable = false\n")
+            f.write("executable = {}\n".format(os.path.join("/opt/soapcw/.venv/bin", config["scripts"]["html_exec"])))
+            script_exec = ""
+        else:
+            f.write("executable = {}\n".format(sys.executable))
+            script_exec = os.path.join(os.path.dirname(sys.executable), config["scripts"]["html_exec"]) + " "
         f.write("RequestMemory = {} \n".format(config["condor"]["memory"]))
         f.write(f'request_disk={config["condor"]["request_disk"]}\n')
         f.write("log = {}/{}_$(cluster).log\n".format(cdirs["log_dir"], comment))
         f.write("error = {}/{}_$(cluster).err\n".format(cdirs["err_dir"], comment))
         f.write("output = {}/{}_$(cluster).out\n".format(cdirs["output_dir"], comment))
 
-        args = f"arguments = -c {config_file}"
+        args = f"arguments = {script_exec}-c {config_file}"
         f.write(args + "\n")
 
         # f.write('accounting_group = aluk.dev.s6.cw.viterbi\n')
