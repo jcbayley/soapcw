@@ -18,17 +18,18 @@ def write_plot_subfile(sub_filename, config, config_file, cdirs, comment, verbos
     with open(sub_filename, "w") as f:
         f.write("# filename: {}\n".format(sub_filename))
         f.write("universe = vanilla\n")
-        # f.write('executable = {}\n'.format(config["scripts"]["search_exec"]))
-        # finds the location of the python executable and replaces with the correct soap exec
-        execute = os.path.join(os.path.split(sys.executable)[0], config["scripts"]["search_exec"])
-        f.write("executable = {}\n".format(execute))
-        f.write("getenv  = True\n")
+        # Run the uv venv python directly and pass the soap runner as its first
+        # argument. The venv is self-contained, so we no longer need getenv=True
+        # to export the submitting environment onto the execute node.
+        python_exec = sys.executable
+        script_exec = os.path.join(os.path.dirname(sys.executable), config["scripts"]["search_exec"])
+        f.write("executable = {}\n".format(python_exec))
         f.write("RequestMemory = {} \n".format(config["condor"]["memory"]))
         f.write(f'request_disk={config["condor"]["request_disk"]}\n')
         f.write("log = {}/{}_$(cluster).log\n".format(cdirs["log_dir"], comment))
         f.write("error = {}/{}_$(cluster).err\n".format(cdirs["err_dir"], comment))
         f.write("output = {}/{}_$(cluster).out\n".format(cdirs["output_dir"], comment))
-        args = f'arguments = --config-file {config_file} -s $(bandstart) -e $(bandend) -r {config["data"]["obs_run"]} -l {config["lookuptable"]["lookup_dir"]} -w {config["condor"]["band_load_size"]} -sd {config["output"]["sub_directory"]}'
+        args = f'arguments = {script_exec} --config-file {config_file} -s $(bandstart) -e $(bandend) -r {config["data"]["obs_run"]} -l {config["lookuptable"]["lookup_dir"]} -w {config["condor"]["band_load_size"]} -sd {config["output"]["sub_directory"]}'
 
         f.write(args + "\n")
         # f.write('accounting_group = aluk.dev.s6.cw.viterbi\n')
@@ -39,20 +40,21 @@ def write_plot_subfile(sub_filename, config, config_file, cdirs, comment, verbos
 
 
 def write_html_subfile(sub_filename, config, config_file, cdirs, comment, verbose=True):
-    execute = os.path.join(os.path.split(sys.executable)[0], config["scripts"]["html_exec"])
+    # Run the uv venv python directly and pass the html runner as its first
+    # argument; the self-contained venv removes the need for getenv=True.
+    python_exec = sys.executable
+    script_exec = os.path.join(os.path.dirname(sys.executable), config["scripts"]["html_exec"])
     with open(sub_filename, "w") as f:
         f.write("# filename: {}\n".format(sub_filename))
         f.write("universe = vanilla\n")
-        f.write("executable = {}\n".format(execute))
-        # f.write('enviroment = ""\n')
-        f.write("getenv  = True\n")
+        f.write("executable = {}\n".format(python_exec))
         f.write("RequestMemory = {} \n".format(config["condor"]["memory"]))
         f.write(f'request_disk={config["condor"]["request_disk"]}\n')
         f.write("log = {}/{}_$(cluster).log\n".format(cdirs["log_dir"], comment))
         f.write("error = {}/{}_$(cluster).err\n".format(cdirs["err_dir"], comment))
         f.write("output = {}/{}_$(cluster).out\n".format(cdirs["output_dir"], comment))
 
-        args = f"arguments = -c {config_file}"
+        args = f"arguments = {script_exec} -c {config_file}"
         f.write(args + "\n")
 
         # f.write('accounting_group = aluk.dev.s6.cw.viterbi\n')
