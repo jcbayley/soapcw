@@ -35,11 +35,11 @@ Installation
 
 .. code-block:: bash
 
-   # Install SOAP in development mode
-   pip install -e .
+   # Set up the environment and install SOAP in development mode
+   uv sync
 
    # Verify installation
-   soapcw-run-soap-astro --help
+   uv run soapcw-run-soap-astro --help
 
 Pipeline Stages
 ===============

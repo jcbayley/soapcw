@@ -20,6 +20,26 @@ for and long duration weak signal.
 
 This package also includes tools to load in standard short Fourier transforms (SFTs) and prepare them for usage with the core SOAP search.
 
+# Installation
+
+Install the latest stable release from PyPI:
+
+```bash
+uv pip install soapcw
+```
+
+Or, for development from a clone of the repository, use [uv](https://docs.astral.sh/uv/) to create an environment and install the project (with dependencies pinned from `uv.lock`):
+
+```bash
+git clone https://github.com/jcbayley/soapcw
+cd soapcw
+uv sync
+```
+
+Then run commands inside the environment with `uv run`, e.g. `uv run soapcw-run-soap-astro --help`.
+
+See the [installation docs](https://jcbayley.github.io/soapcw/installation.html) for more detail.
+
 
 * Free software: MIT license
 * Documentation: https://jcbayley.github.io/soapcw/

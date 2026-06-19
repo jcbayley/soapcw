@@ -51,37 +51,37 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 soapcw tests
+	uv run flake8 soapcw tests
 
 test: ## run tests quickly with the default Python
-	python -m pytest
+	uv run python -m pytest
 
 test-all: ## run tests on every Python version with tox
-	tox
+	uv run tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source soapcw setup.py test
-	coverage report -m
-	coverage html
+	uv run coverage run --source soapcw -m pytest
+	uv run coverage report -m
+	uv run coverage html
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/soapcw.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ src/soapcw
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
+	uv run sphinx-apidoc -o docs/ src/soapcw
+	uv run $(MAKE) -C docs clean
+	uv run $(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
 
 servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+	uv run watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: dist ## package and upload a release
-	twine upload dist/*
+	uv run twine upload dist/*
 
 dist: clean ## builds source and wheel package
-	python -m build --sdist --outdir ./dist .
+	uv build
 	ls -l dist
 
-install: clean ## install the package to the active Python's site-packages
-	pip install .
+install: clean ## set up the environment and install the package with uv
+	uv sync

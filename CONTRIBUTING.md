@@ -61,11 +61,14 @@ Ready to contribute? Here's how to set up `soap` for local development.
 
     $ git clone git@github.com:your_name_here/soapcw.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Set up your fork for local development with `uv`_. This creates a virtual
+   environment in ``.venv`` and installs soap (in editable mode) together with
+   the development dependencies::
 
-    $ mkvirtualenv soap
-    $ cd soap/
-    $ python setup.py develop
+    $ cd soapcw/
+    $ uv sync --extra dev
+
+   .. _uv: https://docs.astral.sh/uv/
 
 4. Create a branch for local development::
 
@@ -76,11 +79,9 @@ Ready to contribute? Here's how to set up `soap` for local development.
 5. When you're done making changes, check that your changes pass flake8 and the
    tests, including testing other Python versions with tox::
 
-    $ flake8 soap tests
-    $ python setup.py test or py.test
-    $ tox
-
-   To get flake8 and tox, just pip install them into your virtualenv.
+    $ uv run flake8 soap tests
+    $ uv run pytest
+    $ uv run tox
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -109,7 +110,7 @@ Before you submit a pull request, check that it meets these guidelines:
 To run a subset of tests::
 
 
-    $ python -m unittest tests.test_soap
+    $ uv run python -m unittest tests.test_soap
 
 ## Deploying
 
