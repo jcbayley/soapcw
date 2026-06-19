@@ -181,7 +181,7 @@ class LoadSFT:
             data.frequencies = np.arange(data.nbins) * data.delta_f + data.f0
 
             # create empty arrays for likleyhoods and epochs
-            data.sft = np.zeros((data.nsft, data.nbins)).astype(np.complex_)
+            data.sft = np.zeros((data.nsft, data.nbins)).astype(np.complex128)
             data.epochs = np.zeros(data.nsft)
             # set fmin and fmax
             data.fmin = det.data[0].f0
@@ -269,13 +269,13 @@ class LoadSFT:
                 print("Warning!: different detectors do not have the same number of frequency bins")
 
             # create empty arrays for likleyhoods and epochs
-            data.sft = np.zeros((data.nsft, data.nbins)).astype(np.complex_)
+            data.sft = np.zeros((data.nsft, data.nbins)).astype(np.complex128)
             data.epochs = np.zeros(data.nsft)
             # set fmin and fmax
             data.fmin = data.f0
             data.fmax = data.f0 + data.nbins / data.tsft
 
-            data.sft = sdict["sft"].astype(np.complex_)
+            data.sft = sdict["sft"].astype(np.complex128)
             data.epochs = sdict["epochs"]
 
             # save sft for detector

@@ -125,7 +125,7 @@ class TimeSeries:
             ffts = np.zeros((tlen, int(fft_length_index + 1)))
             fft_freqs = np.zeros((tlen, int(fft_length_index + 1)))
         elif not real:
-            ffts = np.zeros((tlen, int(fft_length_index + 1)), dtype=np.complex_)
+            ffts = np.zeros((tlen, int(fft_length_index + 1)), dtype=np.complex128)
             fft_freqs = np.zeros((tlen, int(fft_length_index + 1)))
 
         # create each sft

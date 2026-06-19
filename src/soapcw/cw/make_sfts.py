@@ -209,7 +209,7 @@ class MakeSFTs(object):
             ffts = np.zeros((len(time_segments), len(time_segments[0]) / 2))
             fft_freqs = np.zeros((len(time_segments), len(time_segments[0])))  # /2 + 1))
         elif not real:
-            ffts = np.zeros((len(time_segments), len(time_segments[0]) / 2), dtype=np.complex_)
+            ffts = np.zeros((len(time_segments), len(time_segments[0]) / 2), dtype=np.complex128)
             fft_freqs = np.zeros((len(time_segments), len(time_segments[0])))  # /2 + 1))
 
         for t, seg in enumerate(time_segments):
