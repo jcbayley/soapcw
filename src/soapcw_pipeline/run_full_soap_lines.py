@@ -516,7 +516,7 @@ def run_soap_in_band(
     print("num files: ", len(sftfiles))
     start_load = time.time()
     sft_filelists = get_sft_files_find(
-        outpath, sftfiles, overwrite_file=config["output"]["overwrite_files"]
+        outpath, sftfiles, overwrite_file=config.getboolean("output", "overwrite_files")
     )
 
     print("SFT filelist", sft_filelists)

@@ -552,7 +552,7 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose=False, config_file=None):
     start_load = time.time()
 
 
-    sft_filelists = get_sft_files_find(outpath, sftfiles, config.get("output","overwrite_files"))
+    sft_filelists = get_sft_files_find(outpath, sftfiles, config.getboolean("output", "overwrite_files"))
 
 
     sftlist = []
@@ -700,7 +700,7 @@ def run_soap_in_band(config, minfreq, maxfreq, verbose=False, config_file=None):
         table_save_data["lineaware_stat"] = soaprun.max_end_prob
         # if cnn model provided run the cnn on viterbi map  
         st_cnn = time.time()    
-        if config.get("general","run_vitmap"):
+        if config.getboolean("general", "run_vitmap"):
             print("Running CNN on viterbi map")
             vitmap_cnn_prob = run_vitmap_cnn(
                 os.path.join(
