@@ -61,7 +61,8 @@ dependencies = [
     "click",
     "scikit-image",
     "pycbc",
-    "torchvision"
+    "torchvision",
+    "lxml"
     ]
 
 
